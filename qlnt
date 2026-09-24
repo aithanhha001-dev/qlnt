@@ -1,0 +1,588 @@
+```html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Phần mềm Quản lý Nhà trường</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#eef2f7;--sb:#16213e;--sb2:#0f1830;--pri:#2563eb;--ok:#16a34a;--warn:#d97706;--err:#dc2626;--bd:#e2e8f0;--txt:#0f172a;--mut:#64748b}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,Arial,sans-serif}
+body{background:var(--bg);color:var(--txt);font-size:14px}
+.hidden{display:none!important}
+/* ===== LOGIN ===== */
+#loginView{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#16213e,#2563eb)}
+.login-card{background:#fff;padding:36px 32px;border-radius:16px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card h1{font-size:20px;text-align:center;margin-bottom:4px}
+.login-card .sub{text-align:center;color:var(--mut);font-size:13px;margin-bottom:20px}
+.login-card .logo{font-size:44px;text-align:center;margin-bottom:8px}
+label{display:block;font-weight:600;margin:10px 0 4px;font-size:13px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid #93c5fd;border-color:var(--pri)}
+#lgErr{color:var(--err);font-size:13px;min-height:18px;margin-top:8px;text-align:center}
+.hint{font-size:12px;color:var(--mut);text-align:center;margin-top:12px;background:#f1f5f9;padding:8px;border-radius:8px}
+/* ===== LAYOUT ===== */
+#appView{display:flex;min-height:100vh}
+aside{width:240px;background:var(--sb);color:#cbd5e1;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{padding:18px 16px;background:var(--sb2);color:#fff;font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center}
+.menu{padding:10px 0}
+.menu .grp{padding:12px 16px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#64748b}
+.menu a{display:flex;gap:10px;padding:10px 16px;color:#cbd5e1;text-decoration:none;cursor:pointer;border-left:3px solid transparent}
+.menu a:hover{background:#1f2b4d;color:#fff}
+.menu a.active{background:#1f2b4d;color:#fff;border-left-color:var(--pri)}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+header.top{background:#fff;padding:12px 22px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
+header.top h2{font-size:18px}
+.user-chip{display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+main{padding:22px;flex:1}
+/* ===== COMPONENTS ===== */
+.card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:18px}
+.card h3{margin-bottom:14px;font-size:16px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .sp{flex:1}
+.btn{border:none;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;background:#e2e8f0;color:var(--txt)}
+.btn:hover{filter:brightness(.95)}
+.btn-pri{background:var(--pri);color:#fff}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-err{background:var(--err);color:#fff}
+.btn-sm{padding:5px 10px;font-size:12px}
+.tbl-wrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{background:#f8fafc;padding:10px 8px;text-align:left;border-bottom:2px solid var(--bd);white-space:nowrap}
+.tbl td{padding:9px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.tbl tr:hover td{background:#f8fafc}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.badge.ok{background:#dcfce7;color:#166534}
+.badge.warn{background:#fef3c7;color:#92400e}
+.badge.danger{background:#fee2e2;color:#991b1b}
+.badge.info{background:#dbeafe;color:#1e40af}
+.badge.gray{background:#e2e8f0;color:#475569}
+.alert-bar{background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center}
+.stat .ic{font-size:26px;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#eff6ff}
+.stat .num{font-size:24px;font-weight:700}
+.stat .lb{color:var(--mut);font-size:12px}
+/* chấm công */
+.attcell{min-width:32px;text-align:center;font-weight:700;cursor:default;user-select:none}
+.attcell.editable{cursor:pointer}
+.attcell.editable:hover{background:#e0e7ff!important}
+.attcell.ok{background:#dcfce7;color:#166534}
+.attcell.leave{background:#fef3c7;color:#92400e}
+.attcell.absent{background:#fee2e2;color:#991b1b}
+td.sun,th.sun{background:#f1f5f9}
+/* modal */
+#modalWrap{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal{background:#fff;border-radius:14px;width:560px;max-width:100%;max-height:90vh;display:flex;flex-direction:column}
+.modal-h{padding:16px 20px;border-bottom:1px solid var(--bd);font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-b{padding:18px 20px;overflow-y:auto}
+.modal-f{padding:14px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.x{cursor:pointer;font-size:20px;color:var(--mut);background:none;border:none}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:10px;color:#fff;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:99}
+#toast.show{opacity:1}
+#toast.ok{background:var(--ok)} #toast.err{background:var(--err)}
+.search{max-width:280px}
+.is-user .admin-only{display:none!important}
+@media(max-width:860px){aside{width:64px}.brand span,.menu a span.t,.menu .grp{display:none}.menu a{justify-content:center}}
+</style>
+</head>
+<body>
+
+<!-- ============ ĐĂNG NHẬP ============ -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="logo">🏫</div>
+    <h1>QUẢN LÝ NHÀ TRƯỜNG</h1>
+    <div class="sub">Hệ thống quản lý nhân sự – lương – thi đua</div>
+    <label>Tên đăng nhập</label>
+    <input id="lgUser" placeholder="Nhập tên đăng nhập" autocomplete="username">
+    <label>Mật khẩu</label>
+    <input id="lgPass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="lgErr"></div>
+    <button class="btn btn-pri" style="width:100%;padding:11px" onclick="doLogin()">ĐĂNG NHẬP</button>
+    <div class="hint">Tài khoản mặc định — ADMIN: <b>admin / 123456</b> · Nhân sự: <b>gv01 / 123456</b></div>
+  </div>
+</div>
+
+<!-- ============ ỨNG DỤNG ============ -->
+<div id="appView" class="hidden">
+  <aside>
+    <div class="brand">🏫 <span>QL Nhà trường</span></div>
+    <nav class="menu" id="menuBox"></nav>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <h2 id="pageTitle">Trang chủ</h2>
+      <div class="user-chip">
+        <span id="topDate" style="color:var(--mut);font-size:13px"></span>
+        <div class="avatar" id="meAv">A</div>
+        <div><div id="meName" style="font-weight:700"></div><div id="meRole" style="font-size:12px;color:var(--mut)"></div></div>
+        <button class="btn btn-sm" onclick="changePass()">Đổi MK</button>
+        <button class="btn btn-sm btn-err" onclick="doLogout()">Đăng xuất</button>
+      </div>
+    </header>
+    <main id="content"></main>
+  </div>
+</div>
+
+<!-- ============ MODAL & TOAST ============ -->
+<div id="modalWrap" class="hidden">
+  <div class="modal">
+    <div class="modal-h"><span id="modalTitle"></span><button class="x" onclick="closeModal()">✕</button></div>
+    <div class="modal-b" id="modalBody"></div>
+    <div class="modal-f"><button class="btn" onclick="closeModal()">Hủy</button><button class="btn btn-pri" id="modalOk">Lưu</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+<input type="file" id="fileImp" accept=".xlsx,.xls,.csv" class="hidden">
+
+<script>
+/* ==================== TIỆN ÍCH & DỮ LIỆU ==================== */
+const $=s=>document.querySelector(s);
+const uid=()=>'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtDate(iso){if(!iso)return'';const d=new Date(iso);if(isNaN(d))return iso;return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+function parseDate(v){if(v==null||v==='')return'';if(typeof v==='number'){const d=new Date(Math.round((v-25569)*86400000));return toISO(d);}v=String(v).trim();let m=v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');m=v.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0].slice(0,10);return'';}
+function addMonths(iso,n){const d=new Date(iso);d.setMonth(d.getMonth()+Number(n||0));return toISO(d);}
+function daysUntil(iso){if(!iso)return 99999;const t=new Date();t.setHours(0,0,0,0);const d=new Date(iso);d.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
+function g(row,...keys){for(const k of keys){if(row[k]!==undefined&&row[k]!=='')return row[k];}return'';}
+const personName=id=>{const p=DB.personnel.find(x=>x.id===id);return p?p.name:'(đã xóa)';};
+const personCode=id=>{const p=DB.personnel.find(x=>x.id===id);return p?p.code:'';};
+const optSel=(v,c)=>String(v)===String(c)?' selected':'';
+function personOptions(cur){return DB.personnel.map(p=>`<option value="${p.id}"${optSel(p.id,cur)}>${esc(p.code)} - ${esc(p.name)}</option>`).join('');}
+function raiseBadge(next){const d=daysUntil(next);if(d<0)return `<span class="badge danger">⚠ Quá hạn ${-d} ngày</span>`;if(d<=90)return `<span class="badge warn">⏰ Còn ${d} ngày</span>`;return `<span class="badge ok">✔ ${fmtDate(next)}</span>`;}
+function ratingBadge(r){const m={'Xuất sắc':'ok','Tốt':'info','Khá':'warn','Trung bình':'gray','Yếu':'danger'};return `<span class="badge ${m[r]||'gray'}">${esc(r)}</span>`;}
+const nextRaise=s=>addMonths(s.effDate,s.period||36);
+const nextSen=s=>addMonths(s.effDate,s.cycle||12);
+function salaryWarnings(){return DB.salaries.map(s=>({...s,next:nextRaise(s)})).filter(s=>daysUntil(s.next)<=90).sort((a,b)=>daysUntil(a.next)-daysUntil(b.next));}
+function seniorityWarnings(){return DB.seniorities.map(s=>({...s,next:nextSen(s)})).filter(s=>daysUntil(s.next)<=90).sort((a,b)=>daysUntil(a.next)-daysUntil(b.next));}
+
+const LS='qlnt_db_v1';
+function seed(){
+  const per=[['GV01','Nguyễn Thị Hoa','1985-03-12','Nữ','Hiệu trưởng','Ban giám hiệu'],['GV02','Trần Văn Minh','1990-07-25','Nam','Phó Hiệu trưởng','Ban giám hiệu'],['GV03','Lê Thị Thu Hằng','1992-11-05','Nữ','Giáo viên','Tổ Toán - Lý'],['GV04','Phạm Đức Anh','1988-01-18','Nam','Giáo viên','Tổ Văn - Sử'],['GV05','Vũ Thị Lan','1995-09-30','Nữ','Nhân viên','Phòng Tài chính']]
+    .map(a=>({id:uid(),code:a[0],name:a[1],dob:a[2],gender:a[3],position:a[4],dept:a[5],phone:'09'+Math.floor(10000000+Math.random()*89999999),email:'',startDate:'2015-08-20',status:'Đang công tác'}));
+  const now=toISO(new Date());
+  return {
+    users:[{id:uid(),username:'admin',password:'123456',name:'Quản trị viên',role:'admin'},
+           {id:uid(),username:'gv01',password:'123456',name:'Nguyễn Thị Hoa',role:'user'}],
+    personnel:per,
+    attendance:{},
+    evaluations:[],
+    salaries:per.map((p,i)=>({id:uid(),pid:p.id,level:'Bậc '+(i+1),coef:(2.34+i*0.33).toFixed(2),effDate:addMonths(now,[-37,-36+1,-30,-20,-10][i]),period:36,note:''})),
+    seniorities:per.map((p,i)=>({id:uid(),pid:p.id,pct:10+i,effDate:addMonths(now,[-13,-11,-8,-5,-2][i]),cycle:12,step:1,note:''})),
+    commendations:[
+      {id:uid(),pid:per[0].id,year:new Date().getFullYear(),title:'Chiến sĩ thi đua cơ sở',level:'Cấp Sở',no:'15/QĐ-SGD',date:now,note:''},
+      {id:uid(),pid:per[2].id,year:new Date().getFullYear()-1,title:'Lao động tiên tiến',level:'Cấp trường',no:'08/QĐ-TR',date:addMonths(now,-12),note:''}
+    ]
+  };
+}
+let DB;
+try{DB=JSON.parse(localStorage.getItem(LS))||seed();}catch(e){DB=seed();}
+function save(){localStorage.setItem(LS,JSON.stringify(DB));}
+save();
+
+/* ==================== XÁC THỰC & PHÂN QUYỀN ==================== */
+let ME=null;
+const isAdmin=()=>ME&&ME.role==='admin';
+function needAdmin(){if(!isAdmin()){toast('Bạn không có quyền thực hiện thao tác này! (Chỉ ADMIN)','err');return true;}return false;}
+function doLogin(){
+  const u=$('#lgUser').value.trim(),p=$('#lgPass').value;
+  const acc=DB.users.find(x=>x.username===u&&x.password===p);
+  if(!acc){$('#lgErr').textContent='Sai tên đăng nhập hoặc mật khẩu!';return;}
+  sessionStorage.setItem('qlnt_me',acc.id);enterApp();
+}
+function doLogout(){sessionStorage.removeItem('qlnt_me');location.reload();}
+function enterApp(){
+  ME=DB.users.find(x=>x.id===sessionStorage.getItem('qlnt_me'));
+  if(!ME){$('#loginView').classList.remove('hidden');return;}
+  $('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');
+  document.body.classList.toggle('is-user',!isAdmin());
+  $('#meName').textContent=ME.name;$('#meRole').textContent=isAdmin()?'Quản trị viên (ADMIN)':'Nhân sự (chỉ xem)';
+  $('#meAv').textContent=ME.name.charAt(0).toUpperCase();
+  $('#topDate').textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+  buildMenu();go('dashboard');
+}
+function changePass(){
+  openModal('Đổi mật khẩu',`<label>Mật khẩu cũ</label><input type="password" id="f_old"><label>Mật khẩu mới</label><input type="password" id="f_new1"><label>Nhập lại mật khẩu mới</label><input type="password" id="f_new2">`,()=>{
+    const o=$('#f_old').value,n1=$('#f_new1').value,n2=$('#f_new2').value;
+    if(o!==ME.password){toast('Mật khẩu cũ không đúng!','err');return false;}
+    if(n1.length<6){toast('Mật khẩu mới tối thiểu 6 ký tự!','err');return false;}
+    if(n1!==n2){toast('Nhập lại không khớp!','err');return false;}
+    ME.password=n1;save();toast('Đổi mật khẩu thành công!');
+  });
+}
+
+/* ==================== MENU & ĐIỀU HƯỚNG ==================== */
+const PAGES=[
+  {grp:'TỔNG QUAN'},{p:'dashboard',ic:'🏠',t:'Trang chủ'},
+  {grp:'1. QUẢN LÝ NHÂN SỰ'},{p:'personnel',ic:'👥',t:'Danh sách nhân sự'},{p:'attendance',ic:'🗓️',t:'Chấm công theo tháng'},{p:'evaluation',ic:'⭐',t:'Đánh giá nhân sự'},
+  {grp:'2. LƯƠNG & THÂM NIÊN'},{p:'salary',ic:'💰',t:'Quản lý lương'},{p:'seniority',ic:'📈',t:'Quản lý thâm niên'},
+  {grp:'3. THI ĐUA – KHEN THƯỞNG'},{p:'commendation',ic:'🏆',t:'Khen thưởng theo năm'},
+  {grp:'HỆ THỐNG',admin:1},{p:'users',ic:'🔑',t:'Tài khoản đăng nhập',admin:1}
+];
+let currentPage='dashboard';
+function buildMenu(){
+  $('#menuBox').innerHTML=PAGES.filter(m=>!m.admin||isAdmin()).map(m=>m.grp?`<div class="grp">${m.grp}</div>`:`<a data-p="${m.p}" onclick="go('${m.p}')">${m.ic} <span class="t">${m.t}</span></a>`).join('');
+}
+function go(p){
+  if(PAGES.find(x=>x.p===p)?.admin&&!isAdmin()){toast('Chức năng chỉ dành cho ADMIN!','err');return;}
+  currentPage=p;
+  document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('active',a.dataset.p===p));
+  $('#pageTitle').textContent=PAGES.find(x=>x.p===p).t;
+  ({dashboard:pageDashboard,personnel:pagePersonnel,attendance:pageAttendance,evaluation:pageEvaluation,salary:pageSalary,seniority:pageSeniority,commendation:pageCommendation,users:pageUsers})[p]();
+}
+
+/* ==================== MODAL & TOAST ==================== */
+function openModal(title,body,onOk,okText='💾 Lưu lại'){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#modalOk').textContent=okText;$('#modalWrap').classList.remove('hidden');$('#modalOk').onclick=()=>{if(onOk&&onOk()===false)return;closeModal();};}
+function closeModal(){$('#modalWrap').classList.add('hidden');}
+let toastTm;function toast(msg,type='ok'){const t=$('#toast');t.textContent=msg;t.className='show '+type;clearTimeout(toastTm);toastTm=setTimeout(()=>t.className='',2800);}
+
+/* ==================== TRANG CHỦ ==================== */
+function pageDashboard(){
+  const sw=salaryWarnings(),snw=seniorityWarnings(),y=new Date().getFullYear();
+  $('#content').innerHTML=`
+  <div class="stats">
+    <div class="stat"><div class="ic">👥</div><div><div class="num">${DB.personnel.length}</div><div class="lb">Tổng nhân sự</div></div></div>
+    <div class="stat"><div class="ic" style="background:#fef3c7">💰</div><div><div class="num">${sw.length}</div><div class="lb">Cảnh báo nâng lương</div></div></div>
+    <div class="stat"><div class="ic" style="background:#fef3c7">📈</div><div><div class="num">${snw.length}</div><div class="lb">Cảnh báo thâm niên</div></div></div>
+    <div class="stat"><div class="ic" style="background:#dcfce7">🏆</div><div><div class="num">${DB.commendations.filter(c=>+c.year===y).length}</div><div class="lb">Khen thưởng năm ${y}</div></div></div>
+  </div>
+  <div class="card"><h3>⏰ Cảnh báo hạn nâng lương (trong 90 ngày / quá hạn)</h3>
+    ${sw.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Nhân sự</th><th>Bậc</th><th>Hệ số</th><th>Ngày nâng tiếp theo</th><th>Trạng thái</th></tr>
+    ${sw.map(s=>`<tr><td><b>${esc(personName(s.pid))}</b></td><td>${esc(s.level)}</td><td>${s.coef}</td><td>${fmtDate(s.next)}</td><td>${raiseBadge(s.next)}</td></tr>`).join('')}</table></div>`:'<i style="color:var(--mut)">Không có cảnh báo nào.</i>'}
+  </div>
+  <div class="card"><h3>📈 Cảnh báo hạn nâng thâm niên (trong 90 ngày / quá hạn)</h3>
+    ${snw.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Nhân sự</th><th>% hiện tại</th><th>Mốc tăng tiếp theo</th><th>% dự kiến</th><th>Trạng thái</th></tr>
+    ${snw.map(s=>`<tr><td><b>${esc(personName(s.pid))}</b></td><td>${s.pct}%</td><td>${fmtDate(s.next)}</td><td>${Number(s.pct)+Number(s.step||1)}%</td><td>${raiseBadge(s.next)}</td></tr>`).join('')}</table></div>`:'<i style="color:var(--mut)">Không có cảnh báo nào.</i>'}
+  </div>`;
+}
+
+/* ==================== 1A. DANH SÁCH NHÂN SỰ ==================== */
+let pKw='';
+function pagePersonnel(){
+  const kw=pKw.toLowerCase();
+  const rows=DB.personnel.filter(p=>!kw||p.name.toLowerCase().includes(kw)||(p.code||'').toLowerCase().includes(kw)||(p.dept||'').toLowerCase().includes(kw));
+  $('#content').innerHTML=`
+  <div class="card">
+    <div class="toolbar">
+      <input class="search" placeholder="🔍 Tìm theo tên, mã, tổ bộ môn..." value="${esc(pKw)}" oninput="pKw=this.value;pagePersonnel();this.focus();this.setSelectionRange(this.value.length,this.value.length)">
+      <div class="sp"></div>
+      <button class="btn" onclick="tplPersonnel()">📄 File mẫu</button>
+      <button class="btn btn-warn admin-only" onclick="pickFile(importPersonnel)">⬆ Tải tệp lên</button>
+      <button class="btn btn-ok" onclick="exportPersonnel()">⬇ Xuất Excel</button>
+      <button class="btn btn-pri admin-only" onclick="editPerson()">＋ Thêm nhân sự</button>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>STT</th><th>Mã NV</th><th>Họ và tên</th><th>Ngày sinh</th><th>Giới tính</th><th>Chức vụ</th><th>Tổ bộ môn</th><th>Điện thoại</th><th>Ngày vào làm</th><th>Trạng thái</th><th class="admin-only">Thao tác</th></tr>
+      ${rows.map((p,i)=>`<tr><td>${i+1}</td><td><b>${esc(p.code)}</b></td><td>${esc(p.name)}</td><td>${fmtDate(p.dob)}</td><td>${esc(p.gender)}</td><td>${esc(p.position)}</td><td>${esc(p.dept)}</td><td>${esc(p.phone)}</td><td>${fmtDate(p.startDate)}</td><td><span class="badge ${p.status==='Đang công tác'?'ok':'gray'}">${esc(p.status)}</span></td>
+      <td class="admin-only"><button class="btn btn-sm" onclick="editPerson('${p.id}')">✏ Sửa</button> <button class="btn btn-sm btn-err" onclick="delPerson('${p.id}')">🗑 Xóa</button></td></tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+    </table></div>
+  </div>`;
+}
+function personForm(p={}){
+  return `<div class="grid2">
+  <div><label>Mã nhân viên *</label><input id="f_code" value="${esc(p.code||'')}"></div>
+  <div><label>Họ và tên *</label><input id="f_name" value="${esc(p.name||'')}"></div>
+  <div><label>Ngày sinh</label><input id="f_dob" type="date" value="${p.dob||''}"></div>
+  <div><label>Giới tính</label><select id="f_gender">${['Nam','Nữ','Khác'].map(x=>`<option${optSel(x,p.gender||'Nam')}>${x}</option>`).join('')}</select></div>
+  <div><label>Chức vụ</label><input id="f_pos" value="${esc(p.position||'')}"></div>
+  <div><label>Tổ bộ môn / Phòng ban</label><input id="f_dept" value="${esc(p.dept||'')}"></div>
+  <div><label>Điện thoại</label><input id="f_phone" value="${esc(p.phone||'')}"></div>
+  <div><label>Email</label><input id="f_email" value="${esc(p.email||'')}"></div>
+  <div><label>Ngày vào làm</label><input id="f_start" type="date" value="${p.startDate||''}"></div>
+  <div><label>Trạng thái</label><select id="f_status">${['Đang công tác','Nghỉ hưu','Chuyển công tác','Nghỉ việc'].map(x=>`<option${optSel(x,p.status||'Đang công tác')}>${x}</option>`).join('')}</select></div></div>`;
+}
+function readPersonForm(){
+  const code=$('#f_code').value.trim(),name=$('#f_name').value.trim();
+  if(!code||!name){toast('Vui lòng nhập Mã NV và Họ tên!','err');return false;}
+  return {code,name,dob:$('#f_dob').value,gender:$('#f_gender').value,position:$('#f_pos').value.trim(),dept:$('#f_dept').value.trim(),phone:$('#f_phone').value.trim(),email:$('#f_email').value.trim(),startDate:$('#f_start').value,status:$('#f_status').value};
+}
+function editPerson(id){
+  if(needAdmin())return;
+  const p=id?DB.personnel.find(x=>x.id===id):{};
+  openModal(id?'✏ Sửa nhân sự':'＋ Thêm nhân sự',personForm(p),()=>{
+    const d=readPersonForm();if(!d)return false;
+    if(DB.personnel.some(x=>x.code===d.code&&x.id!==id)){toast('Mã NV đã tồn tại!','err');return false;}
+    if(id)Object.assign(DB.personnel.find(x=>x.id===id),d);else DB.personnel.push({id:uid(),...d});
+    save();pagePersonnel();toast(id?'Đã cập nhật!':'Đã thêm nhân sự!');
+  });
+}
+function delPerson(id){
+  if(needAdmin())return;
+  if(!confirm('Xóa nhân sự này?\nToàn bộ dữ liệu chấm công, đánh giá, lương, thâm niên, khen thưởng liên quan cũng bị xóa!'))return;
+  DB.personnel=DB.personnel.filter(p=>p.id!==id);
+  DB.evaluations=DB.evaluations.filter(e=>e.pid!==id);
+  DB.salaries=DB.salaries.filter(s=>s.pid!==id);
+  DB.seniorities=DB.seniorities.filter(s=>s.pid!==id);
+  DB.commendations=DB.commendations.filter(c=>c.pid!==id);
+  for(const m in DB.attendance)delete DB.attendance[m][id];
+  save();pagePersonnel();toast('Đã xóa!');
+}
+
+/* ==================== 1B. CHẤM CÔNG THEO THÁNG ==================== */
+let attMonth=toISO(new Date()).slice(0,7);
+const ATT_STATES=['','✓','P','K'];
+function attCls(v){return v==='✓'?'ok':v==='P'?'leave':v==='K'?'absent':'';}
+function attSum(pid){
+  const [y,m]=attMonth.split('-').map(Number),nd=new Date(y,m,0).getDate();
+  const rec=(DB.attendance[attMonth]||{})[pid]||{};let x=0,p=0,k=0;
+  for(let d=1;d<=nd;d++){const v=rec[d];if(v==='✓')x++;else if(v==='P')p++;else if(v==='K')k++;}
+  return {x,p,k};
+}
+function pageAttendance(){
+  const [y,m]=attMonth.split('-').map(Number),nd=new Date(y,m,0).getDate();
+  const data=DB.attendance[attMonth]||{};
+  let heads='';
+  for(let d=1;d<=nd;d++){const dow=new Date(y,m-1,d).getDay();heads+=`<th class="${dow===0?'sun':''}" style="text-align:center;min-width:32px">${d}</th>`;}
+  $('#content').innerHTML=`
+  <div class="card">
+    <div class="toolbar">
+      <label style="margin:0">Tháng chấm công:</label>
+      <input type="month" style="width:auto" value="${attMonth}" onchange="attMonth=this.value;pageAttendance()">
+      <div class="sp"></div>
+      <span class="badge ok">✓ Có mặt</span><span class="badge warn">P Nghỉ phép</span><span class="badge danger">K Không phép</span>
+    </div>
+    ${isAdmin()?'<div class="alert-bar" style="background:#eff6ff;border-color:#93c5fd;color:#1e40af">💡 Nhấn vào ô để chấm: trống → ✓ → P → K → trống. Dữ liệu tự lưu.</div>':''}
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th style="position:sticky;left:0;background:#f8fafc">Nhân sự</th>${heads}<th>Công</th><th>Phép</th><th>KP</th></tr>
+      ${DB.personnel.map(p=>{
+        const rec=data[p.id]||{};const s=attSum(p.id);let cells='';
+        for(let d=1;d<=nd;d++){const v=rec[d]||'';const dow=new Date(y,m-1,d).getDay();cells+=`<td class="attcell ${attCls(v)} ${dow===0?'sun':''} ${isAdmin()?'editable':''}" onclick="toggleAtt('${p.id}',${d},this)">${v}</td>`;}
+        return `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;white-space:nowrap">${esc(p.code)} - ${esc(p.name)}</td>${cells}<td id="sx${p.id}" style="text-align:center;font-weight:700;color:var(--ok)">${s.x}</td><td id="sp${p.id}" style="text-align:center;color:var(--warn)">${s.p}</td><td id="sk${p.id}" style="text-align:center;color:var(--err)">${s.k}</td></tr>`;
+      }).join('')||'<tr><td style="color:var(--mut)">Chưa có nhân sự</td></tr>'}
+    </table></div>
+  </div>`;
+}
+function toggleAtt(pid,d,el){
+  if(!isAdmin())return;
+  DB.attendance[attMonth]=DB.attendance[attMonth]||{};
+  const rec=DB.attendance[attMonth][pid]=DB.attendance[attMonth][pid]||{};
+  const nxt=ATT_STATES[(ATT_STATES.indexOf(rec[d]||'')+1)%4];
+  if(nxt)rec[d]=nxt;else delete rec[d];
+  save();
+  const [y,m]=attMonth.split('-').map(Number);const dow=new Date(y,m-1,d).getDay();
+  el.textContent=nxt;el.className=`attcell ${attCls(nxt)} ${dow===0?'sun':''} editable`;
+  const s=attSum(pid);$('#sx'+pid).textContent=s.x;$('#sp'+pid).textContent=s.p;$('#sk'+pid).textContent=s.k;
+}
+
+/* ==================== 1C. ĐÁNH GIÁ NHÂN SỰ ==================== */
+let evF={type:'all',month:new Date().getMonth()+1,year:new Date().getFullYear()};
+function pageEvaluation(){
+  const rows=DB.evaluations.filter(e=>(evF.type==='all'||e.type===evF.type)&&(evF.type!=='month'||+e.month===+evF.month)&&(evF.type==='all'||+e.year===+evF.year));
+  $('#content').innerHTML=`
+  <div class="card">
+    <div class="toolbar">
+      <select style="width:auto" onchange="evF.type=this.value;pageEvaluation()">
+        <option value="all"${optSel('all',evF.type)}>Tất cả các kỳ</option>
+        <option value="month"${optSel('month',evF.type)}>Theo tháng</option>
+        <option value="year"${optSel('year',evF.type)}>Theo năm</option>
+      </select>
+      ${evF.type==='month'?`<select style="width:auto" onchange="evF.month=this.value;pageEvaluation()">${Array.from({length:12},(_,i)=>`<option value="${i+1}"${optSel(i+1,evF.month)}>Tháng ${i+1}</option>`).join('')}</select>`:''}
+      ${evF.type!=='all'?`<input type="number" style="width:110px" value="${evF.year}" onchange="evF.year=this.value;pageEvaluation()">`:''}
+      <div class="sp"></div>
+      <button class="btn btn-pri admin-only" onclick="editEval()">＋ Thêm đánh giá</button>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>STT</th><th>Nhân sự</th><th>Kỳ đánh giá</th><th>Xếp loại</th><th>Điểm</th><th>Ghi chú</th><th class="admin-only">Thao tác</th></tr>
+      ${rows.map((e,i)=>`<tr><td>${i+1}</td><td><b>${esc(personName(e.pid))}</b></td><td>${e.type==='month'?'Tháng '+e.month+'/'+e.year:'Năm '+e.year}</td><td>${ratingBadge(e.rating)}</td><td>${e.score??''}</td><td>${esc(e.note)}</td>
+      <td class="admin-only"><button class="btn btn-sm" onclick="editEval('${e.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delEval('${e.id}')">🗑</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+    </table></div>
+  </div>`;
+}
+function editEval(id){
+  if(needAdmin())return;
+  if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
+  const e=id?DB.evaluations.find(x=>x.id===id):{type:'month',month:new Date().getMonth()+1,year:new Date().getFullYear(),rating:'Tốt'};
+  openModal(id?'✏ Sửa đánh giá':'＋ Thêm đánh giá',`
+    <label>Nhân sự *</label><select id="f_pid">${personOptions(e.pid)}</select>
+    <div class="grid2">
+      <div><label>Loại kỳ</label><select id="f_type" onchange="$('#f_month').disabled=this.value!=='month'">
+        <option value="month"${optSel('month',e.type)}>Theo tháng</option><option value="year"${optSel('year',e.type)}>Theo năm</option></select></div>
+      <div><label>Tháng</label><select id="f_month" ${e.type!=='month'?'disabled':''}>${Array.from({length:12},(_,i)=>`<option value="${i+1}"${optSel(i+1,e.month)}>Tháng ${i+1}</option>`).join('')}</select></div>
+      <div><label>Năm</label><input id="f_year" type="number" value="${e.year}"></div>
+      <div><label>Xếp loại</label><select id="f_rating">${['Xuất sắc','Tốt','Khá','Trung bình','Yếu'].map(r=>`<option${optSel(r,e.rating)}>${r}</option>`).join('')}</select></div>
+      <div><label>Điểm số (0-100)</label><input id="f_score" type="number" min="0" max="100" value="${e.score??''}"></div>
+    </div>
+    <label>Ghi chú</label><textarea id="f_note" rows="2">${esc(e.note||'')}</textarea>`,()=>{
+      const d={pid:$('#f_pid').value,type:$('#f_type').value,month:$('#f_month').value,year:$('#f_year').value,rating:$('#f_rating').value,score:$('#f_score').value,note:$('#f_note').value.trim()};
+      if(id)Object.assign(DB.evaluations.find(x=>x.id===id),d);else DB.evaluations.push({id:uid(),...d});
+      save();pageEvaluation();toast('Đã lưu đánh giá!');
+    });
+}
+function delEval(id){if(needAdmin())return;if(!confirm('Xóa đánh giá này?'))return;DB.evaluations=DB.evaluations.filter(e=>e.id!==id);save();pageEvaluation();toast('Đã xóa!');}
+
+/* ==================== 2A. QUẢN LÝ LƯƠNG ==================== */
+function pageSalary(){
+  const sw=salaryWarnings();
+  $('#content').innerHTML=`
+  <div class="card">
+    ${sw.length?`<div class="alert-bar">⚠ Có <b>${sw.length}</b> nhân sự sắp đến hạn hoặc quá hạn nâng lương!</div>`:''}
+    <div class="toolbar"><h3 style="margin:0">💰 Danh sách lương nhân sự</h3><div class="sp"></div>
+      <button class="btn btn-pri admin-only" onclick="editSalary()">＋ Thêm hồ sơ lương</button></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>STT</th><th>Nhân sự</th><th>Bậc lương</th><th>Hệ số</th><th>Ngày hưởng</th><th>Chu kỳ nâng</th><th>Ngày nâng tiếp theo</th><th>Cảnh báo</th><th>Ghi chú</th><th class="admin-only">Thao tác</th></tr>
+      ${DB.salaries.map((s,i)=>{const next=nextRaise(s);return `<tr><td>${i+1}</td><td><b>${esc(personName(s.pid))}</b></td><td>${esc(s.level)}</td><td>${s.coef}</td><td>${fmtDate(s.effDate)}</td><td>${s.period} tháng</td><td><b>${fmtDate(next)}</b></td><td>${raiseBadge(next)}</td><td>${esc(s.note)}</td>
+      <td class="admin-only"><button class="btn btn-sm" onclick="editSalary('${s.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delSalary('${s.id}')">🗑</button></td></tr>`;}).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+    </table></div>
+  </div>`;
+}
+function editSalary(id){
+  if(needAdmin())return;
+  if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
+  const s=id?DB.salaries.find(x=>x.id===id):{period:36};
+  openModal(id?'✏ Sửa hồ sơ lương':'＋ Thêm hồ sơ lương',`
+    <label>Nhân sự *</label><select id="f_pid">${personOptions(s.pid)}</select>
+    <div class="grid2">
+      <div><label>Bậc lương</label><input id="f_level" value="${esc(s.level||'')}" placeholder="VD: Bậc 3"></div>
+      <div><label>Hệ số lương</label><input id="f_coef" type="number" step="0.01" value="${s.coef||''}"></div>
+      <div><label>Ngày hưởng lương hiện tại *</label><input id="f_eff" type="date" value="${s.effDate||''}"></div>
+      <div><label>Chu kỳ nâng bậc (tháng)</label><input id="f_period" type="number" value="${s.period||36}"></div>
+    </div>
+    <label>Ghi chú</label><textarea id="f_note" rows="2">${esc(s.note||'')}</textarea>`,()=>{
+      if(!$('#f_eff').value){toast('Vui lòng chọn ngày hưởng lương!','err');return false;}
+      const d={pid:$('#f_pid').value,level:$('#f_level').value.trim(),coef:$('#f_coef').value,effDate:$('#f_eff').value,period:$('#f_period').value||36,note:$('#f_note').value.trim()};
+      if(DB.salaries.some(x=>x.pid===d.pid&&x.id!==id)){toast('Nhân sự này đã có hồ sơ lương!','err');return false;}
+      if(id)Object.assign(DB.salaries.find(x=>x.id===id),d);else DB.salaries.push({id:uid(),...d});
+      save();pageSalary();toast('Đã lưu hồ sơ lương!');
+    });
+}
+function delSalary(id){if(needAdmin())return;if(!confirm('Xóa hồ sơ lương này?'))return;DB.salaries=DB.salaries.filter(s=>s.id!==id);save();pageSalary();toast('Đã xóa!');}
+
+/* ==================== 2B. QUẢN LÝ THÂM NIÊN ==================== */
+function pageSeniority(){
+  const sw=seniorityWarnings();
+  $('#content').innerHTML=`
+  <div class="card">
+    ${sw.length?`<div class="alert-bar">⚠ Có <b>${sw.length}</b> nhân sự sắp đến hạn hoặc quá hạn nâng thâm niên!</div>`:''}
+    <div class="toolbar"><h3 style="margin:0">📈 Danh sách thâm niên</h3><div class="sp"></div>
+      <button class="btn btn-pri admin-only" onclick="editSeniority()">＋ Thêm thâm niên</button></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>STT</th><th>Nhân sự</th><th>% thâm niên hiện tại</th><th>Ngày hưởng mốc hiện tại</th><th>Chu kỳ tăng</th><th>Mốc tăng tiếp theo</th><th>% dự kiến</th><th>Cảnh báo</th><th class="admin-only">Thao tác</th></tr>
+      ${DB.seniorities.map((s,i)=>{const next=nextSen(s);return `<tr><td>${i+1}</td><td><b>${esc(personName(s.pid))}</b></td><td><b>${s.pct}%</b></td><td>${fmtDate(s.effDate)}</td><td>${s.cycle} tháng</td><td><b>${fmtDate(next)}</b></td><td>${Number(s.pct)+Number(s.step||1)}%</td><td>${raiseBadge(next)}</td>
+      <td class="admin-only"><button class="btn btn-sm" onclick="editSeniority('${s.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delSeniority('${s.id}')">🗑</button></td></tr>`;}).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+    </table></div>
+  </div>`;
+}
+function editSeniority(id){
+  if(needAdmin())return;
+  if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
+  const s=id?DB.seniorities.find(x=>x.id===id):{cycle:12,step:1,pct:0};
+  openModal(id?'✏ Sửa thâm niên':'＋ Thêm thâm niên',`
+    <label>Nhân sự *</label><select id="f_pid">${personOptions(s.pid)}</select>
+    <div class="grid2">
+      <div><label>% thâm niên hiện tại</label><input id="f_pct" type="number" value="${s.pct||0}"></div>
+      <div><label>Ngày hưởng mốc hiện tại *</label><input id="f_eff" type="date" value="${s.effDate||''}"></div>
+      <div><label>Chu kỳ tăng (tháng)</label><input id="f_cycle" type="number" value="${s.cycle||12}"></div>
+      <div><label>Bước tăng (%)</label><input id="f_step" type="number" value="${s.step||1}"></div>
+    </div>
+    <label>Ghi chú</label><textarea id="f_note" rows="2">${esc(s.note||'')}</textarea>`,()=>{
+      if(!$('#f_eff').value){toast('Vui lòng chọn ngày hưởng!','err');return false;}
+      const d={pid:$('#f_pid').value,pct:$('#f_pct').value||0,effDate:$('#f_eff').value,cycle:$('#f_cycle').value||12,step:$('#f_step').value||1,note:$('#f_note').value.trim()};
+      if(DB.seniorities.some(x=>x.pid===d.pid&&x.id!==id)){toast('Nhân sự này đã có hồ sơ thâm niên!','err');return false;}
+      if(id)Object.assign(DB.seniorities.find(x=>x.id===id),d);else DB.seniorities.push({id:uid(),...d});
+      save();pageSeniority();toast('Đã lưu thâm niên!');
+    });
+}
+function delSeniority(id){if(needAdmin())return;if(!confirm('Xóa hồ sơ thâm niên này?'))return;DB.seniorities=DB.seniorities.filter(s=>s.id!==id);save();pageSeniority();toast('Đã xóa!');}
+
+/* ==================== 3. KHEN THƯỞNG THEO NĂM ==================== */
+let kdYear='all';
+function pageCommendation(){
+  const years=[...new Set(DB.commendations.map(c=>+c.year))].sort((a,b)=>b-a);
+  const rows=DB.commendations.filter(c=>kdYear==='all'||+c.year===+kdYear).sort((a,b)=>b.year-a.year);
+  $('#content').innerHTML=`
+  <div class="card">
+    <div class="toolbar">
+      <label style="margin:0">Năm:</label>
+      <select style="width:auto" onchange="kdYear=this.value;pageCommendation()">
+        <option value="all"${optSel('all',kdYear)}>Tất cả</option>
+        ${years.map(y=>`<option${optSel(y,kdYear)}>${y}</option>`).join('')}
+      </select>
+      <div class="sp"></div>
+      <button class="btn" onclick="tplCommend()">📄 File mẫu</button>
+      <button class="btn btn-warn admin-only" onclick="pickFile(importCommend)">⬆ Tải tệp lên</button>
+      <button class="btn btn-ok" onclick="exportCommend()">⬇ Xuất Excel</button>
+      <button class="btn btn-pri admin-only" onclick="editCommend()">＋ Thêm khen thưởng</button>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>STT</th><th>Nhân sự</th><th>Năm</th><th>Danh hiệu / Hình thức</th><th>Cấp khen thưởng</th><th>Số quyết định</th><th>Ngày ký</th><th>Ghi chú</th><th class="admin-only">Thao tác</th></tr>
+      ${rows.map((c,i)=>`<tr><td>${i+1}</td><td><b>${esc(personName(c.pid))}</b></td><td>${c.year}</td><td>${esc(c.title)}</td><td><span class="badge info">${esc(c.level)}</span></td><td>${esc(c.no)}</td><td>${fmtDate(c.date)}</td><td>${esc(c.note)}</td>
+      <td class="admin-only"><button class="btn btn-sm" onclick="editCommend('${c.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delCommend('${c.id}')">🗑</button></td></tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+    </table></div>
+  </div>`;
+}
+function editCommend(id){
+  if(needAdmin())return;
+  if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
+  const c=id?DB.commendations.find(x=>x.id===id):{year:new Date().getFullYear(),date:toISO(new Date()),level:'Cấp trường'};
+  openModal(id?'✏ Sửa khen thưởng':'＋ Thêm khen thưởng',`
+    <label>Nhân sự *</label><select id="f_pid">${personOptions(c.pid)}</select>
+    <div class="grid2">
+      <div><label>Năm *</label><input id="f_year" type="number" value="${c.year}"></div>
+      <div><label>Cấp khen thưởng</label><select id="f_level">${['Cấp trường','Cấp huyện / Sở','Cấp tỉnh / Bộ','Cấp Quốc gia'].map(l=>`<option${optSel(l,c.level)}>${l}</option>`).join('')}</select></div>
+    </div>
+    <label>Danh hiệu / Hình thức khen thưởng *</label>
+    <input id="f_title" list="dlTitle" value="${esc(c.title||'')}">
+    <datalist id="dlTitle"><option>Lao động tiên tiến</option><option>Chiến sĩ thi đua cơ sở</option><option>Chiến sĩ thi đua toàn quốc</option><option>Giáo viên dạy giỏi</option><option>Giấy khen</option><option>Bằng khen</option><option>Huân chương Lao động</option></datalist>
+    <div class="grid2">
+      <div><label>Số quyết định</label><input id="f_no" value="${esc(c.no||'')}"></div>
+      <div><label>Ngày ký</label><input id="f_date" type="date" value="${c.date||''}"></div>
+    </div>
+    <label>Ghi chú</label><textarea id="f_note" rows="2">${esc(c.note||'')}</textarea>`,()=>{
+      if(!$('#f_title').value.trim()){toast('Vui lòng nhập danh hiệu!','err');return false;}
+      const d={pid:$('#f_pid').value,year:$('#f_year').value,level:$('#f_level').value,title:$('#f_title').value.trim(),no:$('#f_no').value.trim(),date:$('#f_date').value,note:$('#f_note').value.trim()};
+      if(id)Object.assign(DB.commendations.find(x=>x.id===id),d);else DB.commendations.push({id:uid(),...d});
+      save();pageCommendation();toast('Đã lưu khen thưởng!');
+    });
+}
+function delCommend(id){if(needAdmin())return;if(!confirm('Xóa khen thưởng này?'))return;DB.commendations=DB.commendations.filter(c=>c.id!==id);save();pageCommendation();toast('Đã xóa!');}
+
+/* ==================== TÀI KHOẢN (ADMIN) ==================== */
+function pageUsers(){
+  $('#content').innerHTML=`
+  <div class="card">
+    <div class="toolbar"><h3 style="margin:0">🔑 Tài khoản đăng nhập</h3><div class="sp"></div>
+      <button class="btn btn-pri" onclick="editUser()">＋ Thêm tài khoản</button></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>STT</th><th>Tên đăng nhập</th><th>Họ tên</th><th>Quyền</th><th>Thao tác</th></tr>
+      ${DB.users.map((u,i)=>`<tr><td>${i+1}</td><td><b>${esc(u.username)}</b></td><td>${esc(u.name)}</td>
+      <td>${u.role==='admin'?'<span class="badge danger">ADMIN — Toàn quyền</span>':'<span class="badge info">Nhân sự — Chỉ xem</span>'}</td>
+      <td><button class="btn btn-sm" onclick="editUser('${u.id}')">✏ Sửa / Đặt lại MK</button> <button class="btn btn-sm btn-err" onclick="delUser('${u.id}')">🗑 Xóa</button></td></tr>`).join('')}
+    </table></div>
+  </div>`;
+}
+function editUser(id){
+  const u=id?DB.users.find(x=>x.id===id):{role:'user'};
+  openModal(id?'✏ Sửa tài khoản':'＋ Thêm tài khoản',`
+    <div class="grid2">
+      <div><label>Tên đăng nhập *</label><input id="f_un" value="${esc(u.username||'')}" ${id?'disabled':''}></div>
+      <div><label>Họ tên *</label><input id="f_fn" value="${esc(u.name||'')}"></div>
+      <div><label>Quyền</label><select id="f_role"><option value="user"${optSel('user',u.role)}>Nhân sự (chỉ xem)</option><option value="admin"${optSel('admin',u.role)}>ADMIN (toàn quyền)</option></select></div>
+      <div><label>${id?'Mật khẩu mới (bỏ trống nếu giữ nguyên)':'Mật khẩu *'}</label><input id="f_pw" type="password"></div>
+    </div>`,()=>{
+      const un=$('#f_un').value.trim(),fn=$('#f_fn').value.trim(),role=$('#f_role').value,pw=$('#f_pw').value;
+      if(!un||!fn){toast('Nhập đủ tên đăng nhập và họ tên!','err');return false;}
+      if(!id){
+        if(pw.length<6){toast('Mật khẩu tối thiểu 6 ký tự!','err');return false;}
+        if(DB.users.some(x=>x.username===un)){toast('Tên đăng nhập đã tồn tại!','err');return false;}
+        DB.users.push({id:uid(),username:un,name:fn,role,password:pw});
+      }else{
+        if(id===ME.id&&role!=='admin'){toast('Không thể tự hạ quyền ADMIN của chính m[req_d13e3a8a] [kimi-k3]
+**Request exceeded 570s limit**
+- Your prompt took too long to process, likely due to a large context window or heavy reasoning required by the AI provider.
+How to fix:
+- **Send "continue"** to resume from where the model stopped (works for most timeouts).
+- **Start a new session/chat** to clear accumulated context and reset the timer.
+- Shorten your prompt or split it into smaller parts.
+- Avoid repeatedly retrying the exact same request to prevent continuous timeouts.
+**Billing:**
+- This request still counts as a request and is billed based on its input (minimum 1,000 prompt / 1,000 completion / 1,000 cached tokens).
+- Do not resend the same request — it will keep failing and keep consuming your quota.
+**Recommended tools:**
+- These responses are optimized for opencode, Claude Code, and Codex.
+- If you are using a non-standard client and keep hitting errors, switch to one of the supported tools above.
