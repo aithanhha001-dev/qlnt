@@ -313,11 +313,15 @@ function pagePersonnel(){
 
 function tplPersonnel(){
   const ws=XLSX.utils.json_to_sheet([{"Mã NV":"GV06","Họ và tên":"Nguyễn Văn A","Ngày sinh":"20/10/1990","Giới tính":"Nam","Chức vụ":"Giáo viên","Tổ bộ môn":"Tổ Toán","Điện thoại":"0987654321","Email":"a@abc.com","Ngày vào làm":"01/08/2020","Trạng thái":"Đang công tác"}]);
-  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"NhanSu"),"Mau_NhanSu.xlsx");
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "NhanSu");
+  XLSX.writeFile(wb, "Mau_NhanSu.xlsx");
 }
 function exportPersonnel(){
   const ws=XLSX.utils.json_to_sheet(DB.personnel.map(p=>({"Mã NV":p.code,"Họ và tên":p.name,"Ngày sinh":fmtDate(p.dob),"Giới tính":p.gender,"Chức vụ":p.position,"Tổ bộ môn":p.dept,"Điện thoại":p.phone,"Email":p.email,"Ngày vào làm":fmtDate(p.startDate),"Trạng thái":p.status})));
-  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"DanhSach"),"DanhSachNhanSu.xlsx");
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "DanhSach");
+  XLSX.writeFile(wb, "DanhSachNhanSu.xlsx");
 }
 function importPersonnel(rows){
   let count=0;
@@ -325,12 +329,14 @@ function importPersonnel(rows){
     const code=g(r,'Mã NV','MaNV','Code'), name=g(r,'Họ và tên','HoTen','Name');
     if(!code||!name)return;
     let p=DB.personnel.find(x=>x.code===code);
-    if(!p){p={id:uid(),code};DB.personnel.push(p);count++;}
+    // Nếu chưa có mã NV này -> Thêm mới. Nếu có rồi -> Cập nhật.
+    if(!p){p={id:uid(),code};DB.personnel.push(p);}
     p.name=name; p.dob=parseDate(g(r,'Ngày sinh','NgaySinh')); p.gender=g(r,'Giới tính','GioiTinh')||'Nam';
     p.position=g(r,'Chức vụ','ChucVu'); p.dept=g(r,'Tổ bộ môn','Phòng ban'); p.phone=g(r,'Điện thoại','SDT');
     p.email=g(r,'Email'); p.startDate=parseDate(g(r,'Ngày vào làm','NgayVaoLam')); p.status=g(r,'Trạng thái','TrangThai')||'Đang công tác';
+    count++;
   });
-  save();pagePersonnel();toast(`Đã nạp thành công ${count} nhân sự mới!`);
+  save();pagePersonnel();toast(`Đã nạp và cập nhật thành công ${count} nhân sự!`);
 }
 
 function personForm(p={}){
@@ -568,11 +574,15 @@ function pageCommendation(){
 
 function tplCommend(){
   const ws=XLSX.utils.json_to_sheet([{"Mã NV":"GV01","Năm":2024,"Danh hiệu":"Chiến sĩ thi đua cơ sở","Cấp":"Cấp Sở","Số QĐ":"01/QĐ","Ngày ký":"15/08/2024","Ghi chú":""}]);
-  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"KhenThuong"),"Mau_KhenThuong.xlsx");
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "KhenThuong");
+  XLSX.writeFile(wb, "Mau_KhenThuong.xlsx");
 }
 function exportCommend(){
   const ws=XLSX.utils.json_to_sheet(DB.commendations.map(c=>({"Mã NV":personCode(c.pid),"Họ tên":personName(c.pid),"Năm":c.year,"Danh hiệu":c.title,"Cấp":c.level,"Số QĐ":c.no,"Ngày ký":fmtDate(c.date),"Ghi chú":c.note})));
-  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"KhenThuong"),"DanhSachKhenThuong.xlsx");
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "KhenThuong");
+  XLSX.writeFile(wb, "DanhSachKhenThuong.xlsx");
 }
 function importCommend(rows){
   let count=0;
