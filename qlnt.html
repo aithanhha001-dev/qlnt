@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -129,7 +128,7 @@ td.sun,th.sun{background:#f1f5f9}
   </div>
 </div>
 
-<!-- ============ MODAL & TOAST ============ -->
+<!-- ============ MODAL & TOAST & FILE ============ -->
 <div id="modalWrap" class="hidden">
   <div class="modal">
     <div class="modal-h"><span id="modalTitle"></span><button class="x" onclick="closeModal()">✕</button></div>
@@ -162,7 +161,7 @@ const nextSen=s=>addMonths(s.effDate,s.cycle||12);
 function salaryWarnings(){return DB.salaries.map(s=>({...s,next:nextRaise(s)})).filter(s=>daysUntil(s.next)<=90).sort((a,b)=>daysUntil(a.next)-daysUntil(b.next));}
 function seniorityWarnings(){return DB.seniorities.map(s=>({...s,next:nextSen(s)})).filter(s=>daysUntil(s.next)<=90).sort((a,b)=>daysUntil(a.next)-daysUntil(b.next));}
 
-const LS='qlnt_db_v1';
+const LS='qlnt_db_v2'; // Đổi key để reset dữ liệu mẫu sạch sẽ
 function seed(){
   const per=[['GV01','Nguyễn Thị Hoa','1985-03-12','Nữ','Hiệu trưởng','Ban giám hiệu'],['GV02','Trần Văn Minh','1990-07-25','Nam','Phó Hiệu trưởng','Ban giám hiệu'],['GV03','Lê Thị Thu Hằng','1992-11-05','Nữ','Giáo viên','Tổ Toán - Lý'],['GV04','Phạm Đức Anh','1988-01-18','Nam','Giáo viên','Tổ Văn - Sử'],['GV05','Vũ Thị Lan','1995-09-30','Nữ','Nhân viên','Phòng Tài chính']]
     .map(a=>({id:uid(),code:a[0],name:a[1],dob:a[2],gender:a[3],position:a[4],dept:a[5],phone:'09'+Math.floor(10000000+Math.random()*89999999),email:'',startDate:'2015-08-20',status:'Đang công tác'}));
@@ -190,13 +189,16 @@ save();
 let ME=null;
 const isAdmin=()=>ME&&ME.role==='admin';
 function needAdmin(){if(!isAdmin()){toast('Bạn không có quyền thực hiện thao tác này! (Chỉ ADMIN)','err');return true;}return false;}
+
 function doLogin(){
   const u=$('#lgUser').value.trim(),p=$('#lgPass').value;
   const acc=DB.users.find(x=>x.username===u&&x.password===p);
   if(!acc){$('#lgErr').textContent='Sai tên đăng nhập hoặc mật khẩu!';return;}
   sessionStorage.setItem('qlnt_me',acc.id);enterApp();
 }
+
 function doLogout(){sessionStorage.removeItem('qlnt_me');location.reload();}
+
 function enterApp(){
   ME=DB.users.find(x=>x.id===sessionStorage.getItem('qlnt_me'));
   if(!ME){$('#loginView').classList.remove('hidden');return;}
@@ -207,6 +209,7 @@ function enterApp(){
   $('#topDate').textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
   buildMenu();go('dashboard');
 }
+
 function changePass(){
   openModal('Đổi mật khẩu',`<label>Mật khẩu cũ</label><input type="password" id="f_old"><label>Mật khẩu mới</label><input type="password" id="f_new1"><label>Nhập lại mật khẩu mới</label><input type="password" id="f_new2">`,()=>{
     const o=$('#f_old').value,n1=$('#f_new1').value,n2=$('#f_new2').value;
@@ -237,10 +240,33 @@ function go(p){
   ({dashboard:pageDashboard,personnel:pagePersonnel,attendance:pageAttendance,evaluation:pageEvaluation,salary:pageSalary,seniority:pageSeniority,commendation:pageCommendation,users:pageUsers})[p]();
 }
 
-/* ==================== MODAL & TOAST ==================== */
+/* ==================== MODAL & TOAST & FILE ==================== */
 function openModal(title,body,onOk,okText='💾 Lưu lại'){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#modalOk').textContent=okText;$('#modalWrap').classList.remove('hidden');$('#modalOk').onclick=()=>{if(onOk&&onOk()===false)return;closeModal();};}
 function closeModal(){$('#modalWrap').classList.add('hidden');}
 let toastTm;function toast(msg,type='ok'){const t=$('#toast');t.textContent=msg;t.className='show '+type;clearTimeout(toastTm);toastTm=setTimeout(()=>t.className='',2800);}
+
+let fileCallback=null;
+function pickFile(cb){
+  fileCallback=cb;
+  $('#fileImp').value='';
+  $('#fileImp').click();
+}
+$('#fileImp').addEventListener('change',function(e){
+  if(!e.target.files.length)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const json=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(fileCallback) fileCallback(json);
+    } catch(err) {
+      toast('Lỗi đọc file Excel!','err');
+    }
+  };
+  reader.readAsArrayBuffer(e.target.files[0]);
+});
 
 /* ==================== TRANG CHỦ ==================== */
 function pageDashboard(){
@@ -284,6 +310,29 @@ function pagePersonnel(){
     </table></div>
   </div>`;
 }
+
+function tplPersonnel(){
+  const ws=XLSX.utils.json_to_sheet([{"Mã NV":"GV06","Họ và tên":"Nguyễn Văn A","Ngày sinh":"20/10/1990","Giới tính":"Nam","Chức vụ":"Giáo viên","Tổ bộ môn":"Tổ Toán","Điện thoại":"0987654321","Email":"a@abc.com","Ngày vào làm":"01/08/2020","Trạng thái":"Đang công tác"}]);
+  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"NhanSu"),"Mau_NhanSu.xlsx");
+}
+function exportPersonnel(){
+  const ws=XLSX.utils.json_to_sheet(DB.personnel.map(p=>({"Mã NV":p.code,"Họ và tên":p.name,"Ngày sinh":fmtDate(p.dob),"Giới tính":p.gender,"Chức vụ":p.position,"Tổ bộ môn":p.dept,"Điện thoại":p.phone,"Email":p.email,"Ngày vào làm":fmtDate(p.startDate),"Trạng thái":p.status})));
+  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"DanhSach"),"DanhSachNhanSu.xlsx");
+}
+function importPersonnel(rows){
+  let count=0;
+  rows.forEach(r=>{
+    const code=g(r,'Mã NV','MaNV','Code'), name=g(r,'Họ và tên','HoTen','Name');
+    if(!code||!name)return;
+    let p=DB.personnel.find(x=>x.code===code);
+    if(!p){p={id:uid(),code};DB.personnel.push(p);count++;}
+    p.name=name; p.dob=parseDate(g(r,'Ngày sinh','NgaySinh')); p.gender=g(r,'Giới tính','GioiTinh')||'Nam';
+    p.position=g(r,'Chức vụ','ChucVu'); p.dept=g(r,'Tổ bộ môn','Phòng ban'); p.phone=g(r,'Điện thoại','SDT');
+    p.email=g(r,'Email'); p.startDate=parseDate(g(r,'Ngày vào làm','NgayVaoLam')); p.status=g(r,'Trạng thái','TrangThai')||'Đang công tác';
+  });
+  save();pagePersonnel();toast(`Đã nạp thành công ${count} nhân sự mới!`);
+}
+
 function personForm(p={}){
   return `<div class="grid2">
   <div><label>Mã nhân viên *</label><input id="f_code" value="${esc(p.code||'')}"></div>
@@ -516,6 +565,32 @@ function pageCommendation(){
     </table></div>
   </div>`;
 }
+
+function tplCommend(){
+  const ws=XLSX.utils.json_to_sheet([{"Mã NV":"GV01","Năm":2024,"Danh hiệu":"Chiến sĩ thi đua cơ sở","Cấp":"Cấp Sở","Số QĐ":"01/QĐ","Ngày ký":"15/08/2024","Ghi chú":""}]);
+  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"KhenThuong"),"Mau_KhenThuong.xlsx");
+}
+function exportCommend(){
+  const ws=XLSX.utils.json_to_sheet(DB.commendations.map(c=>({"Mã NV":personCode(c.pid),"Họ tên":personName(c.pid),"Năm":c.year,"Danh hiệu":c.title,"Cấp":c.level,"Số QĐ":c.no,"Ngày ký":fmtDate(c.date),"Ghi chú":c.note})));
+  XLSX.writeFile(XLSX.utils.book_append_sheet(XLSX.utils.book_new(),ws,"KhenThuong"),"DanhSachKhenThuong.xlsx");
+}
+function importCommend(rows){
+  let count=0;
+  rows.forEach(r=>{
+    const code=g(r,'Mã NV'); const title=g(r,'Danh hiệu');
+    if(!code||!title)return;
+    const p=DB.personnel.find(x=>x.code===code);
+    if(!p)return;
+    DB.commendations.push({
+      id:uid(), pid:p.id, year:g(r,'Năm')||new Date().getFullYear(),
+      title:title, level:g(r,'Cấp')||'Cấp trường', no:g(r,'Số QĐ'),
+      date:parseDate(g(r,'Ngày ký')), note:g(r,'Ghi chú')
+    });
+    count++;
+  });
+  save();pageCommendation();toast(`Đã nạp thành công ${count} khen thưởng!`);
+}
+
 function editCommend(id){
   if(needAdmin())return;
   if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
@@ -556,6 +631,7 @@ function pageUsers(){
     </table></div>
   </div>`;
 }
+
 function editUser(id){
   const u=id?DB.users.find(x=>x.id===id):{role:'user'};
   openModal(id?'✏ Sửa tài khoản':'＋ Thêm tài khoản',`
@@ -572,17 +648,27 @@ function editUser(id){
         if(DB.users.some(x=>x.username===un)){toast('Tên đăng nhập đã tồn tại!','err');return false;}
         DB.users.push({id:uid(),username:un,name:fn,role,password:pw});
       }else{
-        if(id===ME.id&&role!=='admin'){toast('Không thể tự hạ quyền ADMIN của chính m[req_d13e3a8a] [kimi-k3]
-**Request exceeded 570s limit**
-- Your prompt took too long to process, likely due to a large context window or heavy reasoning required by the AI provider.
-How to fix:
-- **Send "continue"** to resume from where the model stopped (works for most timeouts).
-- **Start a new session/chat** to clear accumulated context and reset the timer.
-- Shorten your prompt or split it into smaller parts.
-- Avoid repeatedly retrying the exact same request to prevent continuous timeouts.
-**Billing:**
-- This request still counts as a request and is billed based on its input (minimum 1,000 prompt / 1,000 completion / 1,000 cached tokens).
-- Do not resend the same request — it will keep failing and keep consuming your quota.
-**Recommended tools:**
-- These responses are optimized for opencode, Claude Code, and Codex.
-- If you are using a non-standard client and keep hitting errors, switch to one of the supported tools above.
+        if(id===ME.id&&role!=='admin'){toast('Không thể tự hạ quyền ADMIN của chính mình!','err');return false;}
+        const target=DB.users.find(x=>x.id===id);
+        target.name=fn; target.role=role;
+        if(pw){
+          if(pw.length<6){toast('Mật khẩu mới tối thiểu 6 ký tự!','err');return false;}
+          target.password=pw;
+        }
+      }
+      save();pageUsers();toast(id?'Đã cập nhật tài khoản!':'Đã tạo tài khoản!');
+    });
+}
+
+function delUser(id){
+  if(id===ME.id){toast('Không thể xóa tài khoản của chính mình đang đăng nhập!','err');return;}
+  if(!confirm('Xóa tài khoản này?'))return;
+  DB.users=DB.users.filter(u=>u.id!==id);
+  save();pageUsers();toast('Đã xóa!');
+}
+
+/* ==================== KHỞI ĐỘNG CHƯƠNG TRÌNH ==================== */
+enterApp();
+</script>
+</body>
+</html>
