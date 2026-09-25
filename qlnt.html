@@ -4,20 +4,16 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Phần mềm Quản lý Nhà trường</title>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
-<link rel="preconnect" href="https://www.gstatic.com">
-<link rel="preconnect" href="https://firestore.googleapis.com">
-<!-- Thư viện đọc xuất Excel: dùng defer để KHÔNG chặn hiển thị trang đăng nhập
-     (trước đây trình duyệt phải tải xong file ~700KB này mới vẽ được giao diện) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
-<!-- Font Awesome cho các Icon -->
+<!-- Thư viện đọc xuất Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Font Awesome cho Icon -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 :root{--bg:#eef2f7;--sb:#16213e;--sb2:#0f1830;--pri:#2563eb;--ok:#16a34a;--warn:#d97706;--err:#dc2626;--bd:#e2e8f0;--txt:#0f172a;--mut:#64748b}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,Arial,sans-serif}
 body{background:var(--bg);color:var(--txt);font-size:14px}
 .hidden{display:none!important}
-/* ===== LOGIN ===== */
+
 #loginView{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#16213e,#2563eb)}
 .login-card{background:#fff;padding:36px 32px;border-radius:16px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .login-card h1{font-size:20px;text-align:center;margin-bottom:4px}
@@ -26,9 +22,9 @@ body{background:var(--bg);color:var(--txt);font-size:14px}
 label{display:block;font-weight:600;margin:10px 0 4px;font-size:13px}
 input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:#fff}
 input:focus,select:focus,textarea:focus{outline:2px solid #93c5fd;border-color:var(--pri)}
-#lgErr{color:var(--err);font-size:13px;min-height:18px;margin-top:8px;text-align:center}
+#lgErr{color:var(--err);font-size:13px;min-height:18px;margin-top:8px;text-align:center;font-weight:600}
 .hint{font-size:12px;color:var(--mut);text-align:center;margin-top:12px;background:#f1f5f9;padding:8px;border-radius:8px}
-/* ===== LAYOUT ===== */
+
 #appView{display:flex;min-height:100vh}
 aside{width:240px;background:var(--sb);color:#cbd5e1;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
 .brand{padding:18px 16px;background:var(--sb2);color:#fff;font-weight:700;font-size:15px;display:flex;gap:8px;align-items:center}
@@ -43,7 +39,7 @@ header.top h2{font-size:18px}
 .user-chip{display:flex;align-items:center;gap:10px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
 main{padding:22px;flex:1}
-/* ===== COMPONENTS ===== */
+
 .card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 2px 4px rgba(0,0,0,0.02)}
 .card h3{margin-bottom:14px;font-size:16px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
@@ -56,34 +52,39 @@ main{padding:22px;flex:1}
 .btn-err{background:var(--err);color:#fff}
 .btn-sm{padding:5px 10px;font-size:12px}
 .btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+
 .tbl-wrap{overflow-x:auto}
 table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl th{background:#f8fafc;padding:10px 8px;text-align:left;border-bottom:2px solid var(--bd);white-space:nowrap}
 .tbl td{padding:9px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
 .tbl tr:hover td{background:#f8fafc}
+
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
 .badge.ok{background:#dcfce7;color:#166534}
 .badge.warn{background:#fef3c7;color:#92400e}
 .badge.danger{background:#fee2e2;color:#991b1b}
 .badge.info{background:#dbeafe;color:#1e40af}
 .badge.gray{background:#e2e8f0;color:#475569}
+
 .alert-bar{background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-weight:600}
+.alert-bar.blue{background:#eff6ff;border-color:#93c5fd;color:#1e40af}
+
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
 .stat{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center}
 .stat .ic{font-size:26px;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#eff6ff;color:var(--pri)}
 .stat .num{font-size:24px;font-weight:700}
 .stat .lb{color:var(--mut);font-size:12px}
-/* chấm công */
-.attcell{min-width:32px;text-align:center;font-weight:700;cursor:default;user-select:none}
+
+.attcell{min-width:32px;text-align:center;font-weight:700;cursor:default;user-select:none;transition:background 0.2s}
 .attcell.editable{cursor:pointer}
-.attcell.editable:hover{background:#e0e7ff!important}
+.attcell.editable:hover{background:#e0e7ff!important;box-shadow:inset 0 0 0 2px var(--pri)}
 .attcell.ok{background:#dcfce7;color:#166534}
 .attcell.leave{background:#fef3c7;color:#92400e}
 .attcell.absent{background:#fee2e2;color:#991b1b}
 td.sun,th.sun{background:#f1f5f9}
-/* modal */
-#modalWrap{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
-.modal{background:#fff;border-radius:14px;width:560px;max-width:100%;max-height:90vh;display:flex;flex-direction:column}
+
+#modalWrap{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px;backdrop-filter:blur(2px)}
+.modal{background:#fff;border-radius:14px;width:560px;max-width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)}
 .modal-h{padding:16px 20px;border-bottom:1px solid var(--bd);font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:center}
 .modal-b{padding:18px 20px;overflow-y:auto}
 .modal-f{padding:14px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
@@ -99,7 +100,6 @@ td.sun,th.sun{background:#f1f5f9}
 </head>
 <body>
 
-<!-- ============ ĐĂNG NHẬP ============ -->
 <div id="loginView">
   <div class="login-card">
     <div class="logo">🏫</div>
@@ -114,11 +114,13 @@ td.sun,th.sun{background:#f1f5f9}
     <button id="btnLogin" class="btn btn-pri" style="width:100%;padding:11px;justify-content:center;margin-top:10px" onclick="doLogin()" disabled>
       <i class="fa-solid fa-spinner fa-spin"></i> ĐANG KẾT NỐI ĐÁM MÂY...
     </button>
-    <div class="hint">Tài khoản xem thử: <b>gv01 / 123456</b></div>
+    <div class="hint">
+        Tài khoản ADMIN: <b>admin / 123456</b><br>
+        Tài khoản Xem: <b>gv01 / 123456</b>
+    </div>
   </div>
 </div>
 
-<!-- ============ ỨNG DỤNG ============ -->
 <div id="appView" class="hidden">
   <aside>
     <div class="brand"><i class="fa-solid fa-school"></i> <span>QL Phân hiệu 1</span></div>
@@ -140,39 +142,33 @@ td.sun,th.sun{background:#f1f5f9}
   </div>
 </div>
 
-<!-- ============ MODAL & TOAST & FILE ============ -->
 <div id="modalWrap" class="hidden">
   <div class="modal">
     <div class="modal-h"><span id="modalTitle"></span><button class="x" onclick="closeModal()">✕</button></div>
     <div class="modal-b" id="modalBody"></div>
-    <div class="modal-f"><button class="btn" onclick="closeModal()">Hủy</button><button class="btn btn-pri" id="modalOk"><i class="fa-solid fa-floppy-disk"></i> Lưu</button></div>
+    <div class="modal-f">
+        <button class="btn" onclick="closeModal()">Hủy</button>
+        <button class="btn btn-pri" id="modalOk"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
+    </div>
   </div>
 </div>
 <div id="toast"></div>
 <input type="file" id="fileImp" accept=".xlsx,.xls,.csv" class="hidden">
 
-<!-- ============ SCRIPT CHÍNH ============ -->
 <script>
-/* ==================== TIỆN ÍCH XỬ LÝ ==================== */
 const $=s=>document.querySelector(s);
 const uid=()=>'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmtDate(iso){if(!iso)return'';const d=new Date(iso);if(isNaN(d))return iso;return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
 
-/* Hàm chuyển đổi Ngày tháng siêu việt (Xử lý lỗi Excel khi Tải lên) */
+/* Hàm xử lý chuẩn hóa ngày tháng siêu việt cho Excel */
 function parseDate(v){
   if(v==null||v==='')return'';
-  // Nếu là số Serial của Excel
-  if(typeof v==='number'){
-    const d=new Date(Math.round((v-25569)*86400000));
-    return toISO(d);
-  }
+  if(typeof v==='number'){const d=new Date(Math.round((v-25569)*86400000));return toISO(d);}
   v=String(v).trim();
-  // Nếu định dạng dd/mm/yyyy hoặc d/m/yyyy
   let m=v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
   if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
-  // Nếu đã là yyyy-mm-dd
   m=v.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if(m)return m[0].slice(0,10);
   return '';
@@ -180,37 +176,33 @@ function parseDate(v){
 
 function addMonths(iso,n){const d=new Date(iso);d.setMonth(d.getMonth()+Number(n||0));return toISO(d);}
 function daysUntil(iso){if(!iso)return 99999;const t=new Date();t.setHours(0,0,0,0);const d=new Date(iso);d.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
-// Chuẩn hóa tên cột: bỏ khoảng trắng thừa đầu/cuối, thu gọn khoảng trắng giữa,
-// không phân biệt hoa/thường -> để việc đọc file Excel không quá "cứng nhắc"
-// (trước đây chỉ cần người dùng gõ thừa 1 dấu cách trong tiêu đề cột là báo lỗi "sai mẫu")
-function normKey(s){return String(s??'').replace(/\uFEFF/g,'').trim().toLowerCase().replace(/\s+/g,' ');}
-function g(row,...keys){
-  const wanted=keys.map(normKey);
-  for(const rk in row){
-    const nk=normKey(rk);
-    if(wanted.includes(nk)&&row[rk]!==undefined&&String(row[rk]).trim()!=='')return row[rk];
-  }
-  return'';
-}
+function g(row,...keys){for(const k of keys){if(row[k]!==undefined&&row[k]!=='')return row[k];}return'';}
 
 const personName=id=>{const p=DB.personnel.find(x=>x.id===id);return p?p.name:'(đã xóa)';};
 const personCode=id=>{const p=DB.personnel.find(x=>x.id===id);return p?p.code:'';};
 const optSel=(v,c)=>String(v)===String(c)?' selected':'';
 function personOptions(cur){return DB.personnel.map(p=>`<option value="${p.id}"${optSel(p.id,cur)}>${esc(p.code)} - ${esc(p.name)}</option>`).join('');}
-function raiseBadge(next){const d=daysUntil(next);if(d<0)return `<span class="badge danger">⚠ Quá hạn ${-d} ngày</span>`;if(d<=90)return `<span class="badge warn">⏰ Còn ${d} ngày</span>`;return `<span class="badge ok">✔ ${fmtDate(next)}</span>`;}
-function ratingBadge(r){const m={'Xuất sắc':'ok','Tốt':'info','Khá':'warn','Trung bình':'gray','Yếu':'danger'};return `<span class="badge ${m[r]||'gray'}">${esc(r)}</span>`;}
+
+function raiseBadge(next){
+    const d=daysUntil(next);
+    if(d<0)return `<span class="badge danger">⚠ Quá hạn ${-d} ngày</span>`;
+    if(d<=90)return `<span class="badge warn">⏰ Còn ${d} ngày</span>`;
+    return `<span class="badge ok">✔ ${fmtDate(next)}</span>`;
+}
+function ratingBadge(r){
+    const m={'Xuất sắc':'ok','Tốt':'info','Khá':'warn','Trung bình':'gray','Yếu':'danger'};
+    return `<span class="badge ${m[r]||'gray'}">${esc(r)}</span>`;
+}
 const nextRaise=s=>addMonths(s.effDate,s.period||36);
 const nextSen=s=>addMonths(s.effDate,s.cycle||12);
 function salaryWarnings(){return DB.salaries.map(s=>({...s,next:nextRaise(s)})).filter(s=>daysUntil(s.next)<=90).sort((a,b)=>daysUntil(a.next)-daysUntil(b.next));}
 function seniorityWarnings(){return DB.seniorities.map(s=>({...s,next:nextSen(s)})).filter(s=>daysUntil(s.next)<=90).sort((a,b)=>daysUntil(a.next)-daysUntil(b.next));}
 
-/* ==================== CẤU TRÚC DỮ LIỆU & FIREBASE CLOUD ==================== */
 let DB = null;
 let dbRef = null;
 let fsSetDoc = null;
 window.appStarted = false;
 
-// Dữ liệu mẫu lần đầu khởi tạo
 function seed(){
   const per=[['GV01','Nguyễn Thị Hoa','1985-03-12','Nữ','Hiệu trưởng','Ban giám hiệu'],['GV02','Trần Văn Minh','1990-07-25','Nam','Phó Hiệu trưởng','Ban giám hiệu'],['GV03','Lê Thị Thu Hằng','1992-11-05','Nữ','Giáo viên','Tổ Toán - Lý']]
     .map(a=>({id:uid(),code:a[0],name:a[1],dob:a[2],gender:a[3],position:a[4],dept:a[5],phone:'09'+Math.floor(10000000+Math.random()*89999999),email:'',startDate:'2015-08-20',status:'Đang công tác'}));
@@ -225,37 +217,23 @@ function seed(){
   };
 }
 
-// Hàm đẩy toàn bộ dữ liệu lên Đám mây
-// savePending: đánh dấu "mình vừa tự ghi" để không vẽ lại cả trang khi Firestore
-// echo lại chính thay đổi của mình (đây là nguyên nhân chính gây giật/chậm khi chấm công)
-let savePending = false;
 function save(){
+  // Lưu backup cục bộ đề phòng rớt mạng
+  localStorage.setItem('qlnt_backup', JSON.stringify(DB));
+  
   if(fsSetDoc && dbRef && DB) {
-    savePending = true;
-    fsSetDoc(dbRef, DB).then(()=>{
-        savePending = false;
-        setCloudStatus(true);
-    }).catch(e => {
-        savePending = false;
+    fsSetDoc(dbRef, DB).catch(e => {
         console.error("Lỗi ghi Firebase: ", e);
-        setCloudStatus(false, 'Lỗi lưu Cloud');
-        toast('Lỗi Cloud: Dữ liệu CHƯA được lưu lên máy chủ! Kiểm tra mạng hoặc Firestore Rules.', 'err', 6000);
+        toast('Lỗi kết nối Cloud: Dữ liệu hiện chỉ lưu tạm trên máy này!', 'err');
     });
   }
 }
-function setCloudStatus(ok, msg){
-  const el=$('#cloudStatus'); if(!el)return;
-  if(ok){ el.innerHTML='<i class="fa-solid fa-cloud-check"></i> Đã đồng bộ Cloud'; el.style.color='var(--ok)'; }
-  else { el.innerHTML=`<i class="fa-solid fa-cloud-xmark"></i> ${msg||'Mất kết nối Cloud'}`; el.style.color='var(--err)'; }
-}
 
-// Khởi chạy Firebase qua Dynamic Import
 async function initCloud() {
     try {
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js");
         const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
         
-        // Cấu hình Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyARnYpbhc2EV0MzlzNYvLENWWJk6ql-GTc",
             authDomain: "pmqll-tn.firebaseapp.com",
@@ -268,15 +246,11 @@ async function initCloud() {
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // Lưu toàn bộ vào Collection 'school_data', Document 'main_database'
         dbRef = doc(db, 'school_data', 'main_database');
         fsSetDoc = setDoc;
 
-        // Lắng nghe sự thay đổi của dữ liệu theo thời gian thực (Real-time Sync)
-        // includeMetadataChanges để phân biệt: (1) tiếng vọng của CHÍNH mình vừa ghi
-        // (docSnap.metadata.hasPendingWrites=true) và (2) dữ liệu thật từ máy khác gửi tới.
-        onSnapshot(dbRef, {includeMetadataChanges:true}, (docSnap) => {
-            const isOwnEcho = docSnap.metadata.hasPendingWrites || savePending;
+        // Bật tính năng nhận dạng siêu dữ liệu (để fix lỗi nháy hình khi chấm công)
+        onSnapshot(dbRef, { includeMetadataChanges: true }, (docSnap) => {
             if (docSnap.exists()) {
                 DB = docSnap.data();
                 if(!DB.users) DB.users=[]; if(!DB.personnel) DB.personnel=[]; 
@@ -284,50 +258,52 @@ async function initCloud() {
                 if(!DB.salaries) DB.salaries=[]; if(!DB.seniorities) DB.seniorities=[]; 
                 if(!DB.commendations) DB.commendations=[];
             } else {
-                DB = seed();
-                save(); // Khởi tạo dữ liệu mẫu nếu Cloud chưa có gì
+                DB = seed(); save();
             }
 
-            // Mở khóa nút Đăng nhập
+            // Mở khóa UI Login
             const btn = document.getElementById('btnLogin');
             if(btn) {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> ĐĂNG NHẬP';
             }
 
-            // Nếu phần mềm chưa khởi động, thì tiến hành vào hệ thống
             if (!window.appStarted) {
                 window.appStarted = true;
                 if(sessionStorage.getItem('qlnt_me')) enterApp();
-            } else if (!isOwnEcho) {
-                // CHỈ vẽ lại giao diện khi dữ liệu đến từ MÁY KHÁC.
-                // Thao tác của chính mình (thêm/sửa/xóa/chấm công) đã tự vẽ lại ngay
-                // sau khi gọi save() rồi, nên bỏ qua tiếng vọng này để tránh giật/chậm.
-                if (ME) go(currentPage);
+            } else {
+                // CHỐNG NHÁY MÀN HÌNH (ANTI-FLICKER): 
+                // Chỉ tải lại toàn bộ giao diện nếu thay đổi không phải do máy này vừa thực hiện
+                if (ME && !docSnap.metadata.hasPendingWrites) {
+                    go(currentPage); 
+                }
             }
-            if(!docSnap.metadata.hasPendingWrites) setCloudStatus(true);
         }, (error) => {
-            console.error("Lỗi đồng bộ:", error);
-            $('#btnLogin').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> LỖI KẾT NỐI MẠNG';
-            setCloudStatus(false);
+            console.error(error);
+            $('#btnLogin').innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> LỖI MẠNG CLOUD';
         });
-    } catch(e) {
-        console.error(e);
-    }
+    } catch(e) { console.error(e); }
 }
-initCloud(); // Gọi ngay khi tải trang
+initCloud();
 
-/* ==================== XÁC THỰC & PHÂN QUYỀN ==================== */
 let ME=null;
 const isAdmin=()=>ME&&ME.role==='admin';
-function needAdmin(){if(!isAdmin()){toast('Bạn không có quyền thực hiện thao tác này! (Chỉ ADMIN)','err');return true;}return false;}
+
+function needAdmin(){
+    if(!isAdmin()){
+        toast('Chức năng này bị khóa! (Yêu cầu tài khoản Quản trị viên)', 'err');
+        return true;
+    }
+    return false;
+}
 
 function doLogin(){
-  if(!DB) { toast('Hệ thống chưa kết nối Cloud xong, vui lòng đợi!', 'warn'); return; }
+  if(!DB) { toast('Hệ thống đang tải dữ liệu Cloud, vui lòng đợi!', 'warn'); return; }
   const u=$('#lgUser').value.trim(),p=$('#lgPass').value;
   const acc=DB.users.find(x=>x.username===u&&x.password===p);
   if(!acc){$('#lgErr').innerHTML='<i class="fa-solid fa-circle-exclamation"></i> Sai tên đăng nhập hoặc mật khẩu!';return;}
-  sessionStorage.setItem('qlnt_me',acc.id);enterApp();
+  sessionStorage.setItem('qlnt_me',acc.id);
+  enterApp();
 }
 
 function doLogout(){sessionStorage.removeItem('qlnt_me');location.reload();}
@@ -338,7 +314,8 @@ function enterApp(){
   
   $('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');
   document.body.classList.toggle('is-user',!isAdmin());
-  $('#meName').textContent=ME.name;$('#meRole').textContent=isAdmin()?'Quản trị viên (ADMIN)':'Nhân sự (chỉ xem)';
+  $('#meName').textContent=ME.name;
+  $('#meRole').textContent=isAdmin()?'Quản trị viên (ADMIN)':'Nhân sự (Chỉ xem)';
   $('#meAv').textContent=ME.name.charAt(0).toUpperCase();
   $('#topDate').textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
   
@@ -355,10 +332,9 @@ function changePass(){
   });
 }
 
-/* ==================== MENU & ĐIỀU HƯỚNG ==================== */
 const PAGES=[
-  {grp:'TỔNG QUAN'},{p:'dashboard',ic:'<i class="fa-solid fa-house"></i>',t:'Trang chủ'},
-  {grp:'1. QUẢN LÝ NHÂN SỰ'},{p:'personnel',ic:'<i class="fa-solid fa-users"></i>',t:'Danh sách nhân sự'},{p:'attendance',ic:'<i class="fa-solid fa-calendar-check"></i>',t:'Chấm công theo tháng'},{p:'evaluation',ic:'<i class="fa-solid fa-star"></i>',t:'Đánh giá nhân sự'},
+  {grp:'TỔNG QUAN'},{p:'dashboard',ic:'<i class="fa-solid fa-chart-pie"></i>',t:'Trang chủ'},
+  {grp:'1. QUẢN LÝ NHÂN SỰ'},{p:'personnel',ic:'<i class="fa-solid fa-users-viewfinder"></i>',t:'Danh sách nhân sự'},{p:'attendance',ic:'<i class="fa-solid fa-calendar-check"></i>',t:'Chấm công theo tháng'},{p:'evaluation',ic:'<i class="fa-solid fa-star"></i>',t:'Đánh giá nhân sự'},
   {grp:'2. LƯƠNG & THÂM NIÊN'},{p:'salary',ic:'<i class="fa-solid fa-sack-dollar"></i>',t:'Quản lý lương'},{p:'seniority',ic:'<i class="fa-solid fa-arrow-trend-up"></i>',t:'Quản lý thâm niên'},
   {grp:'3. THI ĐUA – KHEN THƯỞNG'},{p:'commendation',ic:'<i class="fa-solid fa-award"></i>',t:'Khen thưởng theo năm'},
   {grp:'HỆ THỐNG',admin:1},{p:'users',ic:'<i class="fa-solid fa-key"></i>',t:'Tài khoản đăng nhập',admin:1}
@@ -368,17 +344,29 @@ function buildMenu(){
   $('#menuBox').innerHTML=PAGES.filter(m=>!m.admin||isAdmin()).map(m=>m.grp?`<div class="grp">${m.grp}</div>`:`<a data-p="${m.p}" onclick="go('${m.p}')">${m.ic} <span class="t">${m.t}</span></a>`).join('');
 }
 function go(p){
-  if(PAGES.find(x=>x.p===p)?.admin&&!isAdmin()){toast('Chức năng chỉ dành cho ADMIN!','err');return;}
+  if(PAGES.find(x=>x.p===p)?.admin&&!isAdmin()){toast('Chức năng bị khóa!','err');return;}
   currentPage=p;
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('active',a.dataset.p===p));
   $('#pageTitle').textContent=PAGES.find(x=>x.p===p).t;
   ({dashboard:pageDashboard,personnel:pagePersonnel,attendance:pageAttendance,evaluation:pageEvaluation,salary:pageSalary,seniority:pageSeniority,commendation:pageCommendation,users:pageUsers})[p]();
 }
 
-/* ==================== MODAL & TOAST & FILE ==================== */
-function openModal(title,body,onOk,okText='Lưu lại'){$('#modalTitle').innerHTML=title;$('#modalBody').innerHTML=body;$('#modalOk').innerHTML=`<i class="fa-solid fa-floppy-disk"></i> ${okText}`;$('#modalWrap').classList.remove('hidden');$('#modalOk').onclick=()=>{if(onOk&&onOk()===false)return;closeModal();};}
+function openModal(title,body,onOk,okText='Lưu lại'){
+    $('#modalTitle').innerHTML=title;
+    $('#modalBody').innerHTML=body;
+    $('#modalOk').innerHTML=`<i class="fa-solid fa-floppy-disk"></i> ${okText}`;
+    $('#modalWrap').classList.remove('hidden');
+    $('#modalOk').onclick=()=>{if(onOk&&onOk()===false)return;closeModal();};
+}
 function closeModal(){$('#modalWrap').classList.add('hidden');}
-let toastTm;function toast(msg,type='ok',dur){const t=$('#toast');t.innerHTML=`<i class="fa-solid ${type==='ok'?'fa-circle-check':'fa-triangle-exclamation'}"></i> `+msg;t.className='show '+type;clearTimeout(toastTm);toastTm=setTimeout(()=>t.className='',dur||2800);}
+let toastTm;
+function toast(msg,type='ok'){
+    const t=$('#toast');
+    t.innerHTML=`<i class="fa-solid ${type==='ok'?'fa-circle-check':type==='warn'?'fa-triangle-exclamation':'fa-circle-xmark'}"></i> `+msg;
+    t.className='show '+type;
+    clearTimeout(toastTm);
+    toastTm=setTimeout(()=>t.className='',3000);
+}
 
 let fileCallback=null;
 function pickFile(cb){
@@ -397,34 +385,31 @@ $('#fileImp').addEventListener('change',function(e){
       const json=XLSX.utils.sheet_to_json(ws,{defval:''});
       if(fileCallback) fileCallback(json);
     } catch(err) {
-      console.error(err);
       toast('Lỗi đọc file: Vui lòng tải lên đúng file Excel (.xlsx)!','err');
     }
   };
   reader.readAsArrayBuffer(e.target.files[0]);
 });
 
-/* ==================== TRANG CHỦ ==================== */
 function pageDashboard(){
   const sw=salaryWarnings(),snw=seniorityWarnings(),y=new Date().getFullYear();
   $('#content').innerHTML=`
   <div class="stats">
     <div class="stat"><div class="ic"><i class="fa-solid fa-users"></i></div><div><div class="num">${DB.personnel.length}</div><div class="lb">Tổng nhân sự</div></div></div>
-    <div class="stat"><div class="ic" style="background:#fef3c7;color:var(--warn)"><i class="fa-solid fa-sack-dollar"></i></div><div><div class="num">${sw.length}</div><div class="lb">Cảnh báo nâng lương</div></div></div>
-    <div class="stat"><div class="ic" style="background:#fef3c7;color:var(--warn)"><i class="fa-solid fa-arrow-trend-up"></i></div><div><div class="num">${snw.length}</div><div class="lb">Cảnh báo thâm niên</div></div></div>
+    <div class="stat"><div class="ic" style="background:#fee2e2;color:var(--err)"><i class="fa-solid fa-sack-dollar"></i></div><div><div class="num">${sw.length}</div><div class="lb">Cảnh báo Nâng lương</div></div></div>
+    <div class="stat"><div class="ic" style="background:#fef3c7;color:var(--warn)"><i class="fa-solid fa-arrow-trend-up"></i></div><div><div class="num">${snw.length}</div><div class="lb">Cảnh báo Thâm niên</div></div></div>
     <div class="stat"><div class="ic" style="background:#dcfce7;color:var(--ok)"><i class="fa-solid fa-award"></i></div><div><div class="num">${DB.commendations.filter(c=>+c.year===y).length}</div><div class="lb">Khen thưởng năm ${y}</div></div></div>
   </div>
   <div class="card"><h3>⏰ Cảnh báo hạn nâng lương (trong 90 ngày / quá hạn)</h3>
     ${sw.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Nhân sự</th><th>Bậc</th><th>Hệ số</th><th>Ngày nâng tiếp theo</th><th>Trạng thái</th></tr>
-    ${sw.map(s=>`<tr><td><b>${esc(personName(s.pid))}</b></td><td>${esc(s.level)}</td><td>${s.coef}</td><td>${fmtDate(s.next)}</td><td>${raiseBadge(s.next)}</td></tr>`).join('')}</table></div>`:'<i style="color:var(--mut)">Tuyệt vời! Không có cảnh báo nào.</i>'}
+    ${sw.map(s=>`<tr><td><b>${esc(personName(s.pid))}</b></td><td>${esc(s.level)}</td><td>${s.coef}</td><td>${fmtDate(s.next)}</td><td>${raiseBadge(s.next)}</td></tr>`).join('')}</table></div>`:'<div style="color:var(--mut);text-align:center;padding:10px"><i class="fa-regular fa-face-smile text-2xl mb-2 text-ok block"></i> Tuyệt vời! Không có cảnh báo nào.</div>'}
   </div>
   <div class="card"><h3>📈 Cảnh báo hạn nâng thâm niên (trong 90 ngày / quá hạn)</h3>
     ${snw.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Nhân sự</th><th>% hiện tại</th><th>Mốc tăng tiếp theo</th><th>% dự kiến</th><th>Trạng thái</th></tr>
-    ${snw.map(s=>`<tr><td><b>${esc(personName(s.pid))}</b></td><td>${s.pct}%</td><td>${fmtDate(s.next)}</td><td>${Number(s.pct)+Number(s.step||1)}%</td><td>${raiseBadge(s.next)}</td></tr>`).join('')}</table></div>`:'<i style="color:var(--mut)">Tuyệt vời! Không có cảnh báo nào.</i>'}
+    ${snw.map(s=>`<tr><td><b>${esc(personName(s.pid))}</b></td><td>${s.pct}%</td><td>${fmtDate(s.next)}</td><td>${Number(s.pct)+Number(s.step||1)}%</td><td>${raiseBadge(s.next)}</td></tr>`).join('')}</table></div>`:'<div style="color:var(--mut);text-align:center;padding:10px"><i class="fa-regular fa-face-smile text-2xl mb-2 text-ok block"></i> Tuyệt vời! Không có cảnh báo nào.</div>'}
   </div>`;
 }
 
-/* ==================== 1A. DANH SÁCH NHÂN SỰ ==================== */
 let pKw='';
 function pagePersonnel(){
   const kw=pKw.toLowerCase();
@@ -432,23 +417,22 @@ function pagePersonnel(){
   $('#content').innerHTML=`
   <div class="card">
     <div class="toolbar">
-      <input class="search" placeholder="🔍 Tìm theo tên, mã, tổ..." value="${esc(pKw)}" oninput="pKw=this.value;pagePersonnel();this.focus();this.setSelectionRange(this.value.length,this.value.length)">
+      <input class="search" placeholder="🔍 Tìm kiếm nhanh..." value="${esc(pKw)}" oninput="pKw=this.value;pagePersonnel();this.focus();this.setSelectionRange(this.value.length,this.value.length)">
       <div class="sp"></div>
-      <button class="btn" onclick="tplPersonnel()"><i class="fa-solid fa-file-arrow-down"></i> File mẫu</button>
-      <button class="btn btn-warn admin-only" onclick="pickFile(importPersonnel)"><i class="fa-solid fa-upload"></i> Upload</button>
-      <button class="btn btn-ok" onclick="exportPersonnel()"><i class="fa-solid fa-download"></i> Xuất Excel</button>
-      <button class="btn btn-pri admin-only" onclick="editPerson()"><i class="fa-solid fa-plus"></i> Thêm mới</button>
+      <button class="btn" onclick="tplPersonnel()"><i class="fa-solid fa-file-arrow-down"></i> Tải File mẫu</button>
+      <button class="btn btn-warn admin-only" onclick="pickFile(importPersonnel)"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Excel</button>
+      <button class="btn btn-ok" onclick="exportPersonnel()"><i class="fa-solid fa-file-export"></i> Xuất Excel</button>
+      <button class="btn btn-pri admin-only" onclick="editPerson()"><i class="fa-solid fa-user-plus"></i> Thêm mới</button>
     </div>
     <div class="tbl-wrap"><table class="tbl">
       <tr><th>STT</th><th>Mã NV</th><th>Họ và tên</th><th>Ngày sinh</th><th>Giới tính</th><th>Chức vụ</th><th>Tổ bộ môn</th><th>Điện thoại</th><th>Ngày vào làm</th><th>Trạng thái</th><th class="admin-only">Thao tác</th></tr>
-      ${rows.map((p,i)=>`<tr><td>${i+1}</td><td><b>${esc(p.code)}</b></td><td>${esc(p.name)}</td><td>${fmtDate(p.dob)}</td><td>${esc(p.gender)}</td><td>${esc(p.position)}</td><td>${esc(p.dept)}</td><td>${esc(p.phone)}</td><td>${fmtDate(p.startDate)}</td><td><span class="badge ${p.status==='Đang công tác'?'ok':'gray'}">${esc(p.status)}</span></td>
-      <td class="admin-only"><button class="btn btn-sm" onclick="editPerson('${p.id}')"><i class="fa-solid fa-pen"></i> Sửa</button> <button class="btn btn-sm btn-err" onclick="delPerson('${p.id}')"><i class="fa-solid fa-trash"></i> Xóa</button></td></tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+      ${rows.map((p,i)=>`<tr><td>${i+1}</td><td><span class="badge gray" style="font-family:monospace">${esc(p.code)}</span></td><td><b>${esc(p.name)}</b></td><td>${fmtDate(p.dob)}</td><td>${esc(p.gender)}</td><td>${esc(p.position)}</td><td>${esc(p.dept)}</td><td>${esc(p.phone)}</td><td>${fmtDate(p.startDate)}</td><td><span class="badge ${p.status==='Đang công tác'?'ok':'gray'}">${esc(p.status)}</span></td>
+      <td class="admin-only"><button class="btn btn-sm" onclick="editPerson('${p.id}')"><i class="fa-solid fa-pen"></i></button> <button class="btn btn-sm btn-err" onclick="delPerson('${p.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
     </table></div>
   </div>`;
 }
 
 function tplPersonnel(){
-  // Tải file mẫu
   const ws=XLSX.utils.json_to_sheet([{"Mã NV":"GV06","Họ và tên":"Nguyễn Văn A","Ngày sinh":"20/10/1990","Giới tính":"Nam","Chức vụ":"Giáo viên","Tổ bộ môn":"Tổ Toán","Điện thoại":"0987654321","Email":"a@abc.com","Ngày vào làm":"01/08/2020","Trạng thái":"Đang công tác"}]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "NhanSu");
@@ -462,14 +446,11 @@ function exportPersonnel(){
 }
 
 function importPersonnel(rows){
-  if (!rows || rows.length === 0) {
-    toast('File Excel trống hoặc không có dữ liệu!','err');
-    return;
-  }
-  
+  if (!rows || rows.length === 0) { toast('Tệp Excel trống!','err'); return; }
   let added=0, updated=0;
+  
   rows.forEach(r=>{
-    // Mở rộng bộ từ khóa nhận diện các cột trong file Excel
+    // Lọc cột linh hoạt
     const code=g(r,'Mã NV','MaNV','Code','Mã nhân viên','Mã','MÃ NV');
     const name=g(r,'Họ và tên','HoTen','Name','Họ tên','HỌ VÀ TÊN');
     if(!code||!name) return;
@@ -482,7 +463,6 @@ function importPersonnel(rows){
     } else {
         updated++;
     }
-    
     p.name=name; 
     p.dob=parseDate(g(r,'Ngày sinh','NgaySinh','DOB')) || p.dob; 
     p.gender=g(r,'Giới tính','GioiTinh','Phái') || p.gender || 'Nam';
@@ -494,15 +474,8 @@ function importPersonnel(rows){
     p.status=g(r,'Trạng thái','TrangThai','Status') || p.status || 'Đang công tác';
   });
   
-  if(added === 0 && updated === 0) {
-      const found=rows[0]?Object.keys(rows[0]).join(', '):'(không đọc được dòng nào)';
-      toast(`Lỗi: Không tìm thấy cột "Mã NV" hoặc "Họ và tên". Các cột đọc được trong file: ${found}. Hãy dùng nút "File mẫu" và không đổi tên tiêu đề cột.`,'err',7000);
-      return;
-  }
-  
-  save(); 
-  pagePersonnel();
-  toast(`Đã tải lên thành công: Thêm mới ${added}, Cập nhật ${updated} hồ sơ!`);
+  if(added===0 && updated===0) { toast('Lỗi: File thiếu cột "Mã NV" hoặc "Họ và tên". Vui lòng dùng File mẫu!','err'); return; }
+  save(); pagePersonnel(); toast(`Tải lên thành công: Thêm mới ${added}, Cập nhật ${updated} hồ sơ!`);
 }
 
 function personForm(p={}){
@@ -520,32 +493,31 @@ function personForm(p={}){
 }
 function readPersonForm(){
   const code=$('#f_code').value.trim(),name=$('#f_name').value.trim();
-  if(!code||!name){toast('Vui lòng nhập Mã NV và Họ tên!','err');return false;}
+  if(!code||!name){toast('Vui lòng nhập đầy đủ Mã NV và Họ tên!','err');return false;}
   return {code,name,dob:$('#f_dob').value,gender:$('#f_gender').value,position:$('#f_pos').value.trim(),dept:$('#f_dept').value.trim(),phone:$('#f_phone').value.trim(),email:$('#f_email').value.trim(),startDate:$('#f_start').value,status:$('#f_status').value};
 }
 function editPerson(id){
   if(needAdmin())return;
   const p=id?DB.personnel.find(x=>x.id===id):{};
-  openModal(id?'<i class="fa-solid fa-pen"></i> Sửa nhân sự':'<i class="fa-solid fa-user-plus"></i> Thêm nhân sự',personForm(p),()=>{
+  openModal(id?'<i class="fa-solid fa-pen"></i> Sửa hồ sơ':'<i class="fa-solid fa-user-plus"></i> Thêm nhân sự mới',personForm(p),()=>{
     const d=readPersonForm();if(!d)return false;
-    if(DB.personnel.some(x=>x.code===d.code&&x.id!==id)){toast('Mã NV đã tồn tại!','err');return false;}
+    if(DB.personnel.some(x=>x.code===d.code&&x.id!==id)){toast('Mã NV này đã tồn tại!','err');return false;}
     if(id)Object.assign(DB.personnel.find(x=>x.id===id),d);else DB.personnel.push({id:uid(),...d});
-    save();pagePersonnel();toast(id?'Đã cập nhật lên Cloud!':'Đã thêm nhân sự vào Cloud!');
+    save();pagePersonnel();toast(id?'Đã cập nhật thay đổi!':'Đã thêm nhân sự vào hệ thống!');
   });
 }
 function delPerson(id){
   if(needAdmin())return;
-  if(!confirm('Xóa nhân sự này?\nToàn bộ dữ liệu chấm công, đánh giá, lương, thâm niên liên quan cũng bị xóa khỏi Đám mây!'))return;
+  if(!confirm('Cảnh báo nguy hiểm: Bạn có chắc chắn xóa nhân sự này?\nLưu ý: Toàn bộ dữ liệu chấm công, lương, thâm niên liên quan cũng sẽ bị xóa sạch khỏi Đám mây!'))return;
   DB.personnel=DB.personnel.filter(p=>p.id!==id);
   DB.evaluations=DB.evaluations.filter(e=>e.pid!==id);
   DB.salaries=DB.salaries.filter(s=>s.pid!==id);
   DB.seniorities=DB.seniorities.filter(s=>s.pid!==id);
   DB.commendations=DB.commendations.filter(c=>c.pid!==id);
   for(const m in DB.attendance)delete DB.attendance[m][id];
-  save();pagePersonnel();toast('Đã xóa vĩnh viễn khỏi Cloud!');
+  save();pagePersonnel();toast('Đã xóa vĩnh viễn khỏi hệ thống!');
 }
 
-/* ==================== 1B. CHẤM CÔNG THEO THÁNG ==================== */
 let attMonth=toISO(new Date()).slice(0,7);
 const ATT_STATES=['','✓','P','K'];
 function attCls(v){return v==='✓'?'ok':v==='P'?'leave':v==='K'?'absent':'';}
@@ -555,44 +527,71 @@ function attSum(pid){
   for(let d=1;d<=nd;d++){const v=rec[d];if(v==='✓')x++;else if(v==='P')p++;else if(v==='K')k++;}
   return {x,p,k};
 }
+
 function pageAttendance(){
   const [y,m]=attMonth.split('-').map(Number),nd=new Date(y,m,0).getDate();
   const data=DB.attendance[attMonth]||{};
   let heads='';
-  for(let d=1;d<=nd;d++){const dow=new Date(y,m-1,d).getDay();heads+=`<th class="${dow===0?'sun':''}" style="text-align:center;min-width:32px">${d}</th>`;}
+  for(let d=1;d<=nd;d++){const dow=new Date(y,m-1,d).getDay();heads+=`<th class="${dow===0?'sun':''}" style="text-align:center;min-width:34px">${d}</th>`;}
+  
+  const instructionBar = isAdmin() 
+    ? '<div class="alert-bar blue"><i class="fa-solid fa-circle-info"></i> Hướng dẫn: Nhấp chuột trực tiếp vào ô để chấm: <b>[trống] → ✓ → P → K → [trống]</b>. Dữ liệu sẽ tự động lưu lên Cloud.</div>'
+    : '<div class="alert-bar"><i class="fa-solid fa-lock"></i> Tài khoản của thầy/cô chỉ có quyền XEM bảng chấm công. Thao tác chấm công do ADMIN thực hiện.</div>';
+
   $('#content').innerHTML=`
   <div class="card">
     <div class="toolbar">
-      <label style="margin:0">Tháng chấm công:</label>
-      <input type="month" style="width:auto" value="${attMonth}" onchange="attMonth=this.value;pageAttendance()">
+      <label style="margin:0; font-weight:700">Tháng chấm công:</label>
+      <input type="month" style="width:auto; padding:6px 10px" value="${attMonth}" onchange="attMonth=this.value;pageAttendance()">
       <div class="sp"></div>
       <span class="badge ok">✓ Có mặt</span><span class="badge warn">P Nghỉ phép</span><span class="badge danger">K Không phép</span>
     </div>
-    ${isAdmin()?'<div class="alert-bar" style="background:#eff6ff;border-color:#93c5fd;color:#1e40af">💡 Nhấn vào ô để chấm: trống → ✓ → P → K → trống. Tự động lưu lên Cloud.</div>':''}
+    ${instructionBar}
     <div class="tbl-wrap"><table class="tbl">
-      <tr><th style="position:sticky;left:0;background:#f8fafc">Nhân sự</th>${heads}<th>Công</th><th>Phép</th><th>KP</th></tr>
+      <tr><th style="position:sticky;left:0;background:#f8fafc;z-index:2">Mã - Họ Tên</th>${heads}<th>Công</th><th>Phép</th><th>KP</th></tr>
       ${DB.personnel.map(p=>{
         const rec=data[p.id]||{};const s=attSum(p.id);let cells='';
-        for(let d=1;d<=nd;d++){const v=rec[d]||'';const dow=new Date(y,m-1,d).getDay();cells+=`<td class="attcell ${attCls(v)} ${dow===0?'sun':''} ${isAdmin()?'editable':''}" onclick="toggleAtt('${p.id}',${d},this)">${v}</td>`;}
-        return `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;white-space:nowrap">${esc(p.code)} - ${esc(p.name)}</td>${cells}<td id="sx${p.id}" style="text-align:center;font-weight:700;color:var(--ok)">${s.x}</td><td id="sp${p.id}" style="text-align:center;color:var(--warn)">${s.p}</td><td id="sk${p.id}" style="text-align:center;color:var(--err)">${s.k}</td></tr>`;
-      }).join('')||'<tr><td style="color:var(--mut)">Chưa có nhân sự</td></tr>'}
+        for(let d=1;d<=nd;d++){
+            const v=rec[d]||'';const dow=new Date(y,m-1,d).getDay();
+            cells+=`<td class="attcell ${attCls(v)} ${dow===0?'sun':''} ${isAdmin()?'editable':''}" onclick="toggleAtt('${p.id}',${d},this)">${v}</td>`;
+        }
+        return `<tr><td style="position:sticky;left:0;background:#fff;font-weight:600;white-space:nowrap;z-index:1;border-right:1px solid #e2e8f0"><span style="color:var(--pri)">${esc(p.code)}</span> - ${esc(p.name)}</td>${cells}<td id="sx${p.id}" style="text-align:center;font-weight:700;color:var(--ok)">${s.x}</td><td id="sp${p.id}" style="text-align:center;color:var(--warn)">${s.p}</td><td id="sk${p.id}" style="text-align:center;color:var(--err)">${s.k}</td></tr>`;
+      }).join('')||'<tr><td style="color:var(--mut)">Chưa có nhân sự nào trong danh sách.</td></tr>'}
     </table></div>
   </div>`;
 }
-function toggleAtt(pid,d,el){
-  if(!isAdmin())return;
-  DB.attendance[attMonth]=DB.attendance[attMonth]||{};
-  const rec=DB.attendance[attMonth][pid]=DB.attendance[attMonth][pid]||{};
-  const nxt=ATT_STATES[(ATT_STATES.indexOf(rec[d]||'')+1)%4];
-  if(nxt)rec[d]=nxt;else delete rec[d];
+
+// Hàm cốt lõi đã được fix độ giật lag
+window.toggleAtt = function(pid, d, el){
+  if(!isAdmin()) {
+      toast('Tài khoản của thầy/cô không có quyền click chấm công!', 'warn');
+      return;
+  }
+  
+  DB.attendance[attMonth] = DB.attendance[attMonth] || {};
+  DB.attendance[attMonth][pid] = DB.attendance[attMonth][pid] || {};
+  const rec = DB.attendance[attMonth][pid];
+  
+  // Xác định trạng thái tiếp theo
+  const nxt = ATT_STATES[(ATT_STATES.indexOf(rec[d]||'')+1)%4];
+  if(nxt) rec[d] = nxt; else delete rec[d];
+  
+  // Lưu âm thầm lên Firebase
   save(); 
-  const [y,m]=attMonth.split('-').map(Number);const dow=new Date(y,m-1,d).getDay();
-  el.textContent=nxt;el.className=`attcell ${attCls(nxt)} ${dow===0?'sun':''} editable`;
-  const s=attSum(pid);$('#sx'+pid).textContent=s.x;$('#sp'+pid).textContent=s.p;$('#sk'+pid).textContent=s.k;
+  
+  // Cập nhật giao diện Trực tiếp (Fast DOM update) để tránh phải tải lại toàn bộ trang
+  const [y, m] = attMonth.split('-').map(Number);
+  const dow = new Date(y, m-1, d).getDay();
+  el.textContent = nxt;
+  el.className = `attcell ${attCls(nxt)} ${dow===0?'sun':''} editable`;
+  
+  // Cập nhật số cột tổng
+  const s = attSum(pid);
+  $('#sx'+pid).textContent = s.x;
+  $('#sp'+pid).textContent = s.p;
+  $('#sk'+pid).textContent = s.k;
 }
 
-/* ==================== 1C. ĐÁNH GIÁ NHÂN SỰ ==================== */
-let evF={type:'all',month:new Date().getMonth()+1,year:new Date().getFullYear()};
 function pageEvaluation(){
   const rows=DB.evaluations.filter(e=>(evF.type==='all'||e.type===evF.type)&&(evF.type!=='month'||+e.month===+evF.month)&&(evF.type==='all'||+e.year===+evF.year));
   $('#content').innerHTML=`
@@ -606,20 +605,20 @@ function pageEvaluation(){
       ${evF.type==='month'?`<select style="width:auto" onchange="evF.month=this.value;pageEvaluation()">${Array.from({length:12},(_,i)=>`<option value="${i+1}"${optSel(i+1,evF.month)}>Tháng ${i+1}</option>`).join('')}</select>`:''}
       ${evF.type!=='all'?`<input type="number" style="width:110px" value="${evF.year}" onchange="evF.year=this.value;pageEvaluation()">`:''}
       <div class="sp"></div>
-      <button class="btn btn-pri admin-only" onclick="editEval()">＋ Thêm đánh giá</button>
+      <button class="btn btn-pri admin-only" onclick="editEval()"><i class="fa-solid fa-plus"></i> Thêm đánh giá</button>
     </div>
     <div class="tbl-wrap"><table class="tbl">
       <tr><th>STT</th><th>Nhân sự</th><th>Kỳ đánh giá</th><th>Xếp loại</th><th>Điểm</th><th>Ghi chú</th><th class="admin-only">Thao tác</th></tr>
       ${rows.map((e,i)=>`<tr><td>${i+1}</td><td><b>${esc(personName(e.pid))}</b></td><td>${e.type==='month'?'Tháng '+e.month+'/'+e.year:'Năm '+e.year}</td><td>${ratingBadge(e.rating)}</td><td>${e.score??''}</td><td>${esc(e.note)}</td>
-      <td class="admin-only"><button class="btn btn-sm" onclick="editEval('${e.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delEval('${e.id}')">🗑</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+      <td class="admin-only"><button class="btn btn-sm" onclick="editEval('${e.id}')"><i class="fa-solid fa-pen"></i></button> <button class="btn btn-sm btn-err" onclick="delEval('${e.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
     </table></div>
   </div>`;
 }
 function editEval(id){
   if(needAdmin())return;
-  if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
+  if(!DB.personnel.length){toast('Chưa có nhân sự nào trong danh sách!','err');return;}
   const e=id?DB.evaluations.find(x=>x.id===id):{type:'month',month:new Date().getMonth()+1,year:new Date().getFullYear(),rating:'Tốt'};
-  openModal(id?'✏ Sửa đánh giá':'＋ Thêm đánh giá',`
+  openModal(id?'Sửa đánh giá':'Thêm đánh giá',`
     <label>Nhân sự *</label><select id="f_pid">${personOptions(e.pid)}</select>
     <div class="grid2">
       <div><label>Loại kỳ</label><select id="f_type" onchange="$('#f_month').disabled=this.value!=='month'">
@@ -632,23 +631,22 @@ function editEval(id){
     <label>Ghi chú</label><textarea id="f_note" rows="2">${esc(e.note||'')}</textarea>`,()=>{
       const d={pid:$('#f_pid').value,type:$('#f_type').value,month:$('#f_month').value,year:$('#f_year').value,rating:$('#f_rating').value,score:$('#f_score').value,note:$('#f_note').value.trim()};
       if(id)Object.assign(DB.evaluations.find(x=>x.id===id),d);else DB.evaluations.push({id:uid(),...d});
-      save();pageEvaluation();toast('Đã lưu đánh giá lên Cloud!');
+      save();pageEvaluation();toast('Đã lưu thành công!');
     });
 }
-function delEval(id){if(needAdmin())return;if(!confirm('Xóa đánh giá này?'))return;DB.evaluations=DB.evaluations.filter(e=>e.id!==id);save();pageEvaluation();toast('Đã xóa!');}
+function delEval(id){if(needAdmin())return;if(!confirm('Xóa kết quả đánh giá này?'))return;DB.evaluations=DB.evaluations.filter(e=>e.id!==id);save();pageEvaluation();toast('Đã xóa!');}
 
-/* ==================== 2A. QUẢN LÝ LƯƠNG ==================== */
 function pageSalary(){
   const sw=salaryWarnings();
   $('#content').innerHTML=`
   <div class="card">
-    ${sw.length?`<div class="alert-bar">⚠ Có <b>${sw.length}</b> nhân sự sắp đến hạn hoặc quá hạn nâng lương!</div>`:''}
-    <div class="toolbar"><h3 style="margin:0">💰 Danh sách lương nhân sự</h3><div class="sp"></div>
-      <button class="btn btn-pri admin-only" onclick="editSalary()">＋ Thêm hồ sơ lương</button></div>
+    ${sw.length?`<div class="alert-bar">⚠ Hệ thống phát hiện có <b>${sw.length}</b> nhân sự sắp đến hạn hoặc đã quá hạn nâng lương!</div>`:''}
+    <div class="toolbar"><h3 style="margin:0"><i class="fa-solid fa-money-check-dollar"></i> Danh sách lương nhân sự</h3><div class="sp"></div>
+      <button class="btn btn-pri admin-only" onclick="editSalary()"><i class="fa-solid fa-plus"></i> Thêm hồ sơ</button></div>
     <div class="tbl-wrap"><table class="tbl">
       <tr><th>STT</th><th>Nhân sự</th><th>Bậc lương</th><th>Hệ số</th><th>Ngày hưởng</th><th>Chu kỳ nâng</th><th>Ngày nâng tiếp theo</th><th>Cảnh báo</th><th>Ghi chú</th><th class="admin-only">Thao tác</th></tr>
       ${DB.salaries.map((s,i)=>{const next=nextRaise(s);return `<tr><td>${i+1}</td><td><b>${esc(personName(s.pid))}</b></td><td>${esc(s.level)}</td><td>${s.coef}</td><td>${fmtDate(s.effDate)}</td><td>${s.period} tháng</td><td><b>${fmtDate(next)}</b></td><td>${raiseBadge(next)}</td><td>${esc(s.note)}</td>
-      <td class="admin-only"><button class="btn btn-sm" onclick="editSalary('${s.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delSalary('${s.id}')">🗑</button></td></tr>`;}).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+      <td class="admin-only"><button class="btn btn-sm" onclick="editSalary('${s.id}')"><i class="fa-solid fa-pen"></i></button> <button class="btn btn-sm btn-err" onclick="delSalary('${s.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;}).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
     </table></div>
   </div>`;
 }
@@ -656,7 +654,7 @@ function editSalary(id){
   if(needAdmin())return;
   if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
   const s=id?DB.salaries.find(x=>x.id===id):{period:36};
-  openModal(id?'✏ Sửa hồ sơ lương':'＋ Thêm hồ sơ lương',`
+  openModal(id?'Sửa hồ sơ lương':'Thêm hồ sơ lương',`
     <label>Nhân sự *</label><select id="f_pid">${personOptions(s.pid)}</select>
     <div class="grid2">
       <div><label>Bậc lương</label><input id="f_level" value="${esc(s.level||'')}" placeholder="VD: Bậc 3"></div>
@@ -669,23 +667,22 @@ function editSalary(id){
       const d={pid:$('#f_pid').value,level:$('#f_level').value.trim(),coef:$('#f_coef').value,effDate:$('#f_eff').value,period:$('#f_period').value||36,note:$('#f_note').value.trim()};
       if(DB.salaries.some(x=>x.pid===d.pid&&x.id!==id)){toast('Nhân sự này đã có hồ sơ lương!','err');return false;}
       if(id)Object.assign(DB.salaries.find(x=>x.id===id),d);else DB.salaries.push({id:uid(),...d});
-      save();pageSalary();toast('Đã lưu hồ sơ lương lên Cloud!');
+      save();pageSalary();toast('Đã lưu hồ sơ!');
     });
 }
 function delSalary(id){if(needAdmin())return;if(!confirm('Xóa hồ sơ lương này?'))return;DB.salaries=DB.salaries.filter(s=>s.id!==id);save();pageSalary();toast('Đã xóa!');}
 
-/* ==================== 2B. QUẢN LÝ THÂM NIÊN ==================== */
 function pageSeniority(){
   const sw=seniorityWarnings();
   $('#content').innerHTML=`
   <div class="card">
-    ${sw.length?`<div class="alert-bar">⚠ Có <b>${sw.length}</b> nhân sự sắp đến hạn hoặc quá hạn nâng thâm niên!</div>`:''}
-    <div class="toolbar"><h3 style="margin:0">📈 Danh sách thâm niên</h3><div class="sp"></div>
-      <button class="btn btn-pri admin-only" onclick="editSeniority()">＋ Thêm thâm niên</button></div>
+    ${sw.length?`<div class="alert-bar">⚠ Hệ thống phát hiện có <b>${sw.length}</b> nhân sự sắp đến hạn hoặc quá hạn nâng thâm niên!</div>`:''}
+    <div class="toolbar"><h3 style="margin:0"><i class="fa-solid fa-arrow-trend-up"></i> Danh sách thâm niên</h3><div class="sp"></div>
+      <button class="btn btn-pri admin-only" onclick="editSeniority()"><i class="fa-solid fa-plus"></i> Thêm thâm niên</button></div>
     <div class="tbl-wrap"><table class="tbl">
       <tr><th>STT</th><th>Nhân sự</th><th>% thâm niên hiện tại</th><th>Ngày hưởng mốc hiện tại</th><th>Chu kỳ tăng</th><th>Mốc tăng tiếp theo</th><th>% dự kiến</th><th>Cảnh báo</th><th class="admin-only">Thao tác</th></tr>
-      ${DB.seniorities.map((s,i)=>{const next=nextSen(s);return `<tr><td>${i+1}</td><td><b>${esc(personName(s.pid))}</b></td><td><b>${s.pct}%</b></td><td>${fmtDate(s.effDate)}</td><td>${s.cycle} tháng</td><td><b>${fmtDate(next)}</b></td><td>${Number(s.pct)+Number(s.step||1)}%</td><td>${raiseBadge(next)}</td>
-      <td class="admin-only"><button class="btn btn-sm" onclick="editSeniority('${s.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delSeniority('${s.id}')">🗑</button></td></tr>`;}).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+      ${DB.seniorities.map((s,i)=>{const next=nextSen(s);return `<tr><td>${i+1}</td><td><b>${esc(personName(s.pid))}</b></td><td><span class="badge info">${s.pct}%</span></td><td>${fmtDate(s.effDate)}</td><td>${s.cycle} tháng</td><td><b>${fmtDate(next)}</b></td><td>${Number(s.pct)+Number(s.step||1)}%</td><td>${raiseBadge(next)}</td>
+      <td class="admin-only"><button class="btn btn-sm" onclick="editSeniority('${s.id}')"><i class="fa-solid fa-pen"></i></button> <button class="btn btn-sm btn-err" onclick="delSeniority('${s.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`;}).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
     </table></div>
   </div>`;
 }
@@ -693,7 +690,7 @@ function editSeniority(id){
   if(needAdmin())return;
   if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
   const s=id?DB.seniorities.find(x=>x.id===id):{cycle:12,step:1,pct:0};
-  openModal(id?'✏ Sửa thâm niên':'＋ Thêm thâm niên',`
+  openModal(id?'Sửa thâm niên':'Thêm thâm niên',`
     <label>Nhân sự *</label><select id="f_pid">${personOptions(s.pid)}</select>
     <div class="grid2">
       <div><label>% thâm niên hiện tại</label><input id="f_pct" type="number" value="${s.pct||0}"></div>
@@ -706,13 +703,11 @@ function editSeniority(id){
       const d={pid:$('#f_pid').value,pct:$('#f_pct').value||0,effDate:$('#f_eff').value,cycle:$('#f_cycle').value||12,step:$('#f_step').value||1,note:$('#f_note').value.trim()};
       if(DB.seniorities.some(x=>x.pid===d.pid&&x.id!==id)){toast('Nhân sự này đã có hồ sơ thâm niên!','err');return false;}
       if(id)Object.assign(DB.seniorities.find(x=>x.id===id),d);else DB.seniorities.push({id:uid(),...d});
-      save();pageSeniority();toast('Đã lưu thâm niên lên Cloud!');
+      save();pageSeniority();toast('Đã lưu!');
     });
 }
 function delSeniority(id){if(needAdmin())return;if(!confirm('Xóa hồ sơ thâm niên này?'))return;DB.seniorities=DB.seniorities.filter(s=>s.id!==id);save();pageSeniority();toast('Đã xóa!');}
 
-/* ==================== 3. KHEN THƯỞNG THEO NĂM ==================== */
-let kdYear='all';
 function pageCommendation(){
   const years=[...new Set(DB.commendations.map(c=>+c.year))].sort((a,b)=>b-a);
   const rows=DB.commendations.filter(c=>kdYear==='all'||+c.year===+kdYear).sort((a,b)=>b.year-a.year);
@@ -721,19 +716,19 @@ function pageCommendation(){
     <div class="toolbar">
       <label style="margin:0">Năm:</label>
       <select style="width:auto" onchange="kdYear=this.value;pageCommendation()">
-        <option value="all"${optSel('all',kdYear)}>Tất cả</option>
+        <option value="all"${optSel('all',kdYear)}>Tất cả các năm</option>
         ${years.map(y=>`<option${optSel(y,kdYear)}>${y}</option>`).join('')}
       </select>
       <div class="sp"></div>
-      <button class="btn" onclick="tplCommend()">📄 File mẫu</button>
-      <button class="btn btn-warn admin-only" onclick="pickFile(importCommend)">⬆ Tải tệp lên</button>
-      <button class="btn btn-ok" onclick="exportCommend()">⬇ Xuất Excel</button>
-      <button class="btn btn-pri admin-only" onclick="editCommend()">＋ Thêm khen thưởng</button>
+      <button class="btn" onclick="tplCommend()"><i class="fa-solid fa-file-arrow-down"></i> File mẫu</button>
+      <button class="btn btn-warn admin-only" onclick="pickFile(importCommend)"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Excel</button>
+      <button class="btn btn-ok" onclick="exportCommend()"><i class="fa-solid fa-file-export"></i> Xuất Excel</button>
+      <button class="btn btn-pri admin-only" onclick="editCommend()"><i class="fa-solid fa-plus"></i> Thêm khen thưởng</button>
     </div>
     <div class="tbl-wrap"><table class="tbl">
       <tr><th>STT</th><th>Nhân sự</th><th>Năm</th><th>Danh hiệu / Hình thức</th><th>Cấp khen thưởng</th><th>Số quyết định</th><th>Ngày ký</th><th>Ghi chú</th><th class="admin-only">Thao tác</th></tr>
       ${rows.map((c,i)=>`<tr><td>${i+1}</td><td><b>${esc(personName(c.pid))}</b></td><td>${c.year}</td><td>${esc(c.title)}</td><td><span class="badge info">${esc(c.level)}</span></td><td>${esc(c.no)}</td><td>${fmtDate(c.date)}</td><td>${esc(c.note)}</td>
-      <td class="admin-only"><button class="btn btn-sm" onclick="editCommend('${c.id}')">✏</button> <button class="btn btn-sm btn-err" onclick="delCommend('${c.id}')">🗑</button></td></tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
+      <td class="admin-only"><button class="btn btn-sm" onclick="editCommend('${c.id}')"><i class="fa-solid fa-pen"></i></button> <button class="btn btn-sm btn-err" onclick="delCommend('${c.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--mut)">Chưa có dữ liệu</td></tr>'}
     </table></div>
   </div>`;
 }
@@ -751,6 +746,7 @@ function exportCommend(){
   XLSX.writeFile(wb, "DanhSachKhenThuong.xlsx");
 }
 function importCommend(rows){
+  if (!rows || rows.length === 0) { toast('Tệp trống!','err'); return; }
   let count=0;
   rows.forEach(r=>{
     const code=g(r,'Mã NV'); const title=g(r,'Danh hiệu');
@@ -764,14 +760,14 @@ function importCommend(rows){
     });
     count++;
   });
-  save();pageCommendation();toast(`Đã nạp thành công ${count} khen thưởng lên Cloud!`);
+  save();pageCommendation();toast(`Đã Upload thành công ${count} khen thưởng!`);
 }
 
 function editCommend(id){
   if(needAdmin())return;
   if(!DB.personnel.length){toast('Chưa có nhân sự nào!','err');return;}
   const c=id?DB.commendations.find(x=>x.id===id):{year:new Date().getFullYear(),date:toISO(new Date()),level:'Cấp trường'};
-  openModal(id?'✏ Sửa khen thưởng':'＋ Thêm khen thưởng',`
+  openModal(id?'Sửa khen thưởng':'Thêm khen thưởng',`
     <label>Nhân sự *</label><select id="f_pid">${personOptions(c.pid)}</select>
     <div class="grid2">
       <div><label>Năm *</label><input id="f_year" type="number" value="${c.year}"></div>
@@ -788,7 +784,7 @@ function editCommend(id){
       if(!$('#f_title').value.trim()){toast('Vui lòng nhập danh hiệu!','err');return false;}
       const d={pid:$('#f_pid').value,year:$('#f_year').value,level:$('#f_level').value,title:$('#f_title').value.trim(),no:$('#f_no').value.trim(),date:$('#f_date').value,note:$('#f_note').value.trim()};
       if(id)Object.assign(DB.commendations.find(x=>x.id===id),d);else DB.commendations.push({id:uid(),...d});
-      save();pageCommendation();toast('Đã lưu khen thưởng lên Cloud!');
+      save();pageCommendation();toast('Đã lưu!');
     });
 }
 function delCommend(id){if(needAdmin())return;if(!confirm('Xóa khen thưởng này?'))return;DB.commendations=DB.commendations.filter(c=>c.id!==id);save();pageCommendation();toast('Đã xóa!');}
@@ -797,24 +793,24 @@ function delCommend(id){if(needAdmin())return;if(!confirm('Xóa khen thưởng n
 function pageUsers(){
   $('#content').innerHTML=`
   <div class="card">
-    <div class="toolbar"><h3 style="margin:0">🔑 Tài khoản đăng nhập</h3><div class="sp"></div>
-      <button class="btn btn-pri" onclick="editUser()">＋ Thêm tài khoản</button></div>
+    <div class="toolbar"><h3 style="margin:0"><i class="fa-solid fa-users-gear"></i> Tài khoản đăng nhập</h3><div class="sp"></div>
+      <button class="btn btn-pri" onclick="editUser()"><i class="fa-solid fa-user-plus"></i> Thêm tài khoản</button></div>
     <div class="tbl-wrap"><table class="tbl">
       <tr><th>STT</th><th>Tên đăng nhập</th><th>Họ tên</th><th>Quyền</th><th>Thao tác</th></tr>
-      ${DB.users.map((u,i)=>`<tr><td>${i+1}</td><td><b>${esc(u.username)}</b></td><td>${esc(u.name)}</td>
+      ${DB.users.map((u,i)=>`<tr><td>${i+1}</td><td><span class="badge gray" style="font-family:monospace">${esc(u.username)}</span></td><td><b>${esc(u.name)}</b></td>
       <td>${u.role==='admin'?'<span class="badge danger">ADMIN — Toàn quyền</span>':'<span class="badge info">Nhân sự — Chỉ xem</span>'}</td>
-      <td><button class="btn btn-sm" onclick="editUser('${u.id}')">✏ Sửa / Đặt lại MK</button> <button class="btn btn-sm btn-err" onclick="delUser('${u.id}')">🗑 Xóa</button></td></tr>`).join('')}
+      <td><button class="btn btn-sm" onclick="editUser('${u.id}')">✏ Sửa</button> <button class="btn btn-sm btn-err" onclick="delUser('${u.id}')">🗑 Xóa</button></td></tr>`).join('')}
     </table></div>
   </div>`;
 }
 
 function editUser(id){
   const u=id?DB.users.find(x=>x.id===id):{role:'user'};
-  openModal(id?'✏ Sửa tài khoản':'＋ Thêm tài khoản',`
+  openModal(id?'Sửa tài khoản':'Thêm tài khoản',`
     <div class="grid2">
       <div><label>Tên đăng nhập *</label><input id="f_un" value="${esc(u.username||'')}" ${id?'disabled':''}></div>
       <div><label>Họ tên *</label><input id="f_fn" value="${esc(u.name||'')}"></div>
-      <div><label>Quyền</label><select id="f_role"><option value="user"${optSel('user',u.role)}>Nhân sự (chỉ xem)</option><option value="admin"${optSel('admin',u.role)}>ADMIN (toàn quyền)</option></select></div>
+      <div><label>Quyền</label><select id="f_role"><option value="user"${optSel('user',u.role)}>Nhân sự (Chỉ xem)</option><option value="admin"${optSel('admin',u.role)}>ADMIN (Toàn quyền)</option></select></div>
       <div><label>${id?'Mật khẩu mới (bỏ trống nếu giữ nguyên)':'Mật khẩu *'}</label><input id="f_pw" type="password"></div>
     </div>`,()=>{
       const un=$('#f_un').value.trim(),fn=$('#f_fn').value.trim(),role=$('#f_role').value,pw=$('#f_pw').value;
@@ -832,7 +828,7 @@ function editUser(id){
           target.password=pw;
         }
       }
-      save();pageUsers();toast(id?'Đã cập nhật tài khoản lên Cloud!':'Đã tạo tài khoản!');
+      save();pageUsers();toast(id?'Đã cập nhật!':'Đã tạo tài khoản!');
     });
 }
 
@@ -842,7 +838,6 @@ function delUser(id){
   DB.users=DB.users.filter(u=>u.id!==id);
   save();pageUsers();toast('Đã xóa!');
 }
-
 </script>
 </body>
 </html>
