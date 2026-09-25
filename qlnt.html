@@ -363,7 +363,8 @@ $('#fileImp').addEventListener('change',function(e){
       const json=XLSX.utils.sheet_to_json(ws,{defval:''});
       if(fileCallback) fileCallback(json);
     } catch(err) {
-      toast('Lỗi đọc file Excel!','err');
+      console.error(err);
+      toast('Lỗi đọc file: Vui lòng tải lên đúng file Excel (.xlsx)!','err');
     }
   };
   reader.readAsArrayBuffer(e.target.files[0]);
@@ -427,10 +428,16 @@ function exportPersonnel(){
 }
 
 function importPersonnel(rows){
+  if (!rows || rows.length === 0) {
+    toast('File Excel trống hoặc không có dữ liệu!','err');
+    return;
+  }
+  
   let added=0, updated=0;
   rows.forEach(r=>{
-    const code=g(r,'Mã NV','MaNV','Code');
-    const name=g(r,'Họ và tên','HoTen','Name');
+    // Mở rộng bộ từ khóa nhận diện các cột trong file Excel
+    const code=g(r,'Mã NV','MaNV','Code','Mã nhân viên','Mã','MÃ NV');
+    const name=g(r,'Họ và tên','HoTen','Name','Họ tên','HỌ VÀ TÊN');
     if(!code||!name) return;
     
     let p=DB.personnel.find(x=>x.code===code);
@@ -443,19 +450,24 @@ function importPersonnel(rows){
     }
     
     p.name=name; 
-    p.dob=parseDate(g(r,'Ngày sinh','NgaySinh')) || p.dob; 
-    p.gender=g(r,'Giới tính','GioiTinh') || p.gender || 'Nam';
-    p.position=g(r,'Chức vụ','ChucVu') || p.position; 
-    p.dept=g(r,'Tổ bộ môn','Phòng ban') || p.dept; 
-    p.phone=g(r,'Điện thoại','SDT') || p.phone;
-    p.email=g(r,'Email') || p.email; 
+    p.dob=parseDate(g(r,'Ngày sinh','NgaySinh','DOB')) || p.dob; 
+    p.gender=g(r,'Giới tính','GioiTinh','Phái') || p.gender || 'Nam';
+    p.position=g(r,'Chức vụ','ChucVu','Position') || p.position; 
+    p.dept=g(r,'Tổ bộ môn','Phòng ban','Tổ','Khoa') || p.dept; 
+    p.phone=g(r,'Điện thoại','SDT','SĐT','Phone') || p.phone;
+    p.email=g(r,'Email','Thư điện tử') || p.email; 
     p.startDate=parseDate(g(r,'Ngày vào làm','NgayVaoLam')) || p.startDate; 
-    p.status=g(r,'Trạng thái','TrangThai') || p.status || 'Đang công tác';
+    p.status=g(r,'Trạng thái','TrangThai','Status') || p.status || 'Đang công tác';
   });
+  
+  if(added === 0 && updated === 0) {
+      toast('Lỗi: File thiếu cột "Mã NV" hoặc "Họ và tên"! Hãy dùng File Mẫu.','err');
+      return;
+  }
   
   save(); 
   pagePersonnel();
-  toast(`Đã thêm mới ${added} và cập nhật ${updated} nhân sự lên Cloud!`);
+  toast(`Đã tải lên thành công: Thêm mới ${added}, Cập nhật ${updated} hồ sơ!`);
 }
 
 function personForm(p={}){
