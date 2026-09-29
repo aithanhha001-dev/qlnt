@@ -15,6 +15,15 @@ import streamlit as st
 st.set_page_config(page_title="Quản lý Nhà trường", layout="wide", page_icon="🏫")
 DB_NAME = "quanly_nhatruong.db"
 
+# Ẩn thanh công cụ của Streamlit (nút Edit/Deploy/menu ⋮) để người dùng không mở được mã nguồn từ giao diện
+st.markdown("""
+<style>
+[data-testid="stToolbar"], [data-testid="stMainMenu"], [data-testid="stAppDeployButton"],
+[data-testid="stDeployButton"], .stDeployButton, #MainMenu, footer,
+[data-testid="stDecoration"], [data-testid="stStatusWidget"] { display: none !important; visibility: hidden !important; }
+</style>
+""", unsafe_allow_html=True)
+
 # Tương thích nhiều phiên bản Streamlit (use_container_width đã bị thay bằng width="stretch")
 _ST_VER = tuple(int(x) for x in re.findall(r"\d+", st.__version__)[:2])
 W = {"width": "stretch"} if _ST_VER >= (1, 50) else {"use_container_width": True}
@@ -35,10 +44,16 @@ CHUC_VU_LIST = ["Hiệu trưởng", "Phó hiệu trưởng", "Tổ trưởng CM"
                 "Nhân viên y tế", "Nhân viên Hành chính", "Nhân viên khác"]
 # Tên chức vụ cũ trong CSDL đã có -> tên mới (giữ nguyên id nên hồ sơ cũ không bị mất chức vụ)
 CHUC_VU_CU = {"Phó Hiệu trưởng": "Phó hiệu trưởng", "Tổ trưởng": "Tổ trưởng CM", "Nhân viên": "Nhân viên khác"}
+
+
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
+
+
 def check_hashes(password, hashed_text):
     return make_hashes(password) == hashed_text
+
+
 # ---------- Cơ sở dữ liệu ----------
 @contextmanager
 def db():
@@ -52,18 +67,26 @@ def db():
         raise
     finally:
         conn.close()
+
+
 def q(sql, params=()):
     with db() as conn:
         return pd.read_sql_query(sql, conn, params=params)
+
+
 def run(sql, params=()):
     with db() as conn:
         conn.execute(sql, params)
+
+
 def flash_rerun(msg, *clear_keys):
     """Lưu thông báo rồi rerun (trước đây st.success bị mất ngay sau st.rerun)."""
     st.session_state["flash"] = msg
     for k in clear_keys:
         st.session_state.pop(k, None)
     st.rerun()
+
+
 # ---------- Ngày tháng / định dạng ----------
 def date_or_none(val):
     """Chuyển mọi kiểu giá trị về date; không hợp lệ -> None. Kẹp vào [MIN_DATE, MAX_DATE]."""
@@ -89,26 +112,40 @@ def date_or_none(val):
     except Exception:
         return None
     return min(max(d, MIN_DATE), MAX_DATE)
+
+
 def date_or_today(val):
     return date_or_none(val) or date.today()
+
+
 def sql_date(d):
     return d.strftime("%Y-%m-%d") if d else None
+
+
 def format_date_vn(val):
     d = date_or_none(val)
     return d.strftime("%d/%m/%Y") if d else ""
+
+
 def safe_str(val):
     try:
         return "" if val is None or pd.isna(val) else str(val)
     except (TypeError, ValueError):
         return str(val)
+
+
 def pick(options, value, default=0):
     return options.index(value) if value in options else default
+
+
 def _autofit(ws, df):
     from openpyxl.utils import get_column_letter
     for i, col in enumerate(df.columns, start=1):
         width = max([len(str(col))] + [len(str(v)) for v in df[col].head(500)]) + 2
         ws.column_dimensions[get_column_letter(i)].width = min(max(width, 8), 40)
     ws.freeze_panes = "A2"
+
+
 def to_excel_sheets(sheets):
     """sheets: dict {tên sheet: DataFrame} -> bytes file Excel."""
     output = io.BytesIO()
@@ -117,8 +154,12 @@ def to_excel_sheets(sheets):
             df.to_excel(writer, index=False, sheet_name=name[:31])
             _autofit(writer.sheets[name[:31]], df)
     return output.getvalue()
+
+
 def to_excel_bytes(df, sheet_name="DanhSach"):
     return to_excel_sheets({sheet_name: df})
+
+
 def quarter_of(ts):
     """Quý (1-4) của một ngày; 1 năm chia 4 quý: T1-3, T4-6, T7-9, T10-12."""
     return (ts.month - 1) // 3 + 1
@@ -128,6 +169,8 @@ def filter_quarter(df, col, year, quarter):
     """Lọc các dòng có ngày ở cột `col` (Timestamp/NaT) rơi vào quý/năm chỉ định, sắp theo ngày."""
     mask = df[col].apply(lambda t: pd.notna(t) and t.year == year and quarter_of(t) == quarter)
     return df[mask].sort_values(col)
+
+
 def quarter_export_ui(df, date_col, cols, title, file_prefix, key):
     """Giao diện chọn Năm/Quý + xem trước + tải Excel (1 quý hoặc cả năm 4 sheet)."""
     st.subheader(title)
@@ -139,10 +182,12 @@ def quarter_export_ui(df, date_col, cols, title, file_prefix, key):
     if df.empty:
         st.info("Chưa có dữ liệu.")
         return
+
     def prep(sub):
         out = sub[cols].copy()
         out.insert(0, "STT", range(1, len(out) + 1))
         return out
+
     df_q = prep(filter_quarter(df, date_col, int(nam_x), int(quy_x)))
     if df_q.empty:
         st.info(f"Không có cán bộ đến hạn trong Quý {quy_x}/{int(nam_x)}.")
@@ -154,11 +199,17 @@ def quarter_export_ui(df, date_col, cols, title, file_prefix, key):
     if any(not v.empty for v in all_sheets.values()):
         st.download_button(f"📥 Xuất cả năm {int(nam_x)} (4 sheet theo quý)", data=to_excel_sheets(all_sheets),
                            mime=XLSX_MIME, file_name=f"{file_prefix}_Nam{int(nam_x)}.xlsx", key=f"{key}_dl_year")
+
+
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
 def generate_excel_template():
     cols = ["Mã VC", "Họ và tên", "Giới tính", "Ngày sinh", "Dân tộc", "Ngày tuyển dụng",
             "Ngày vào Đảng", "Trình độ", "Chuyên ngành", "Ghi chú"]
     return to_excel_bytes(pd.DataFrame(columns=cols))
+
+
 def style_cham_cong(val):
     return {
         "P": "color: red; font-weight: bold;",
@@ -174,6 +225,8 @@ def style_days(df, day_cols):
     s = df.style
     fn = s.map if hasattr(s, "map") else s.applymap  # pandas < 2.1 dùng applymap
     return fn(style_cham_cong, subset=day_cols)
+
+
 # ==========================================
 # 2. KHỞI TẠO CƠ SỞ DỮ LIỆU
 # ==========================================
@@ -181,6 +234,8 @@ VC_EXTRA_COLS = {
     "he_so_luong": "REAL", "phu_cap": "REAL", "ngay_huong_luong": "DATE", "chu_ky_nang_luong": "INTEGER",
     "muc_tham_nien": "REAL", "ngay_huong_tham_nien": "DATE", "chu_ky_nang_tham_nien": "INTEGER",
 }
+
+
 def init_db():
     with db() as conn:
         c = conn.cursor()
@@ -207,14 +262,17 @@ def init_db():
                         FOREIGN KEY(vien_chuc_id) REFERENCES vien_chuc(id))""")
         c.execute("""CREATE TABLE IF NOT EXISTS vu_viec (
                         id INTEGER PRIMARY KEY AUTOINCREMENT, ngay_thang DATE, noi_dung TEXT, phuong_an TEXT)""")
+
         # Nâng cấp CSDL cũ: bổ sung cột còn thiếu
         def add_missing(table, cols):
             existing = [r[1] for r in c.execute(f"PRAGMA table_info({table})").fetchall()]
             for name, typ in cols.items():
                 if name not in existing:
                     c.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
+
         add_missing("users", {"ma_vien_chuc": "TEXT"})
         add_missing("vien_chuc", VC_EXTRA_COLS)
+
         if c.execute("SELECT COUNT(*) FROM users WHERE username='admin'").fetchone()[0] == 0:
             c.execute("INSERT INTO users (username, password, role, ma_vien_chuc) VALUES (?, ?, ?, '')",
                       ("admin", make_hashes("admin123"), "admin"))
@@ -228,15 +286,21 @@ def init_db():
         # Xóa các chức vụ thừa không còn ai sử dụng (chức vụ thừa đang có người dùng thì giữ lại để không mất dữ liệu)
         c.execute(f"""DELETE FROM chuc_vu WHERE ten_chuc_vu NOT IN ({','.join('?' * len(CHUC_VU_LIST))})
                       AND id NOT IN (SELECT chuc_vu_id FROM vien_chuc WHERE chuc_vu_id IS NOT NULL)""", CHUC_VU_LIST)
+
+
 init_db()
+
+
 # ==========================================
 # 3. MÀN HÌNH ĐĂNG NHẬP
 # ==========================================
 def logout():
     st.session_state.update({"logged_in": False, "username": "", "role": "", "ma_vien_chuc": "", "flash": ""})
     st.rerun()
+
+
 if not st.session_state["logged_in"]:
-    st.markdown("<h1 style='text-align: center; color: #1E88E5; margin-top: 50px;'>🏫 HỆ THỐNG QUẢN LÝ NHÂN SỰ PHÂN HIỆU 1 - PHƯƠNG THIỆN</h1>",
+    st.markdown("<h1 style='text-align: center; color: #1E88E5; margin-top: 50px;'>🏫 HỆ THỐNG QUẢN LÝ NHÂN SỰ</h1>",
                 unsafe_allow_html=True)
     st.markdown("---")
     _, col2, _ = st.columns([1, 1, 1])
@@ -257,24 +321,32 @@ if not st.session_state["logged_in"]:
             else:
                 st.error("❌ Tài khoản hoặc mật khẩu không chính xác!")
     st.stop()
+
 is_admin = st.session_state["role"] == "admin"
 current_ma_vc = st.session_state["ma_vien_chuc"]
+
 if not is_admin and not current_ma_vc:
     st.error("Tài khoản của bạn chưa được liên kết với hồ sơ Cán bộ nào. Vui lòng liên hệ Quản trị viên.")
     if st.button("Đăng xuất"):
         logout()
     st.stop()
+
+
 def get_current_vc_id():
     """FIX: dùng tham số hóa, tránh SQL injection / lỗi khi mã có dấu nháy."""
     if is_admin:
         return None
     res = q("SELECT id FROM vien_chuc WHERE ma_vien_chuc = ?", (current_ma_vc,))
     return int(res.iloc[0]["id"]) if not res.empty else None
+
+
 def scope_where(alias="vc", prefix="WHERE"):
     """Trả về (mệnh đề SQL, tham số) giới hạn dữ liệu theo người dùng."""
     if is_admin:
         return "", ()
     return f"{prefix} {alias}.ma_vien_chuc = ?", (current_ma_vc,)
+
+
 def delete_vien_chuc(ids):
     """Xóa hồ sơ kèm dữ liệu liên quan (SQLite mặc định không tự xóa dây chuyền)."""
     ids = [int(i) for i in ids]
@@ -288,6 +360,8 @@ def delete_vien_chuc(ids):
         conn.execute(f"DELETE FROM vien_chuc WHERE id IN ({ph})", ids)
         if codes:
             conn.execute(f"UPDATE users SET ma_vien_chuc='' WHERE ma_vien_chuc IN ({','.join('?' * len(codes))})", codes)
+
+
 df_chuc_vu = q("SELECT * FROM chuc_vu")
 _order = lambda t: CHUC_VU_LIST.index(t) if t in CHUC_VU_LIST else len(CHUC_VU_LIST)
 df_chuc_vu = df_chuc_vu.assign(_o=df_chuc_vu["ten_chuc_vu"].map(_order)).sort_values(["_o", "id"])
@@ -299,16 +373,21 @@ if is_admin:
     _adm = q("SELECT password FROM users WHERE username='admin'")
     if not _adm.empty and check_hashes("admin123", _adm.iloc[0]["password"]):
         st.sidebar.warning("⚠️ Tài khoản admin đang dùng mật khẩu mặc định. Hãy đổi trong mục Quản lý Tài khoản!")
+
 menu_options = ["📊 Tổng quan", "👥 Quản lý Nhân sự", "⏱️ Chấm công", "💰 Quản lý Lương", "⏳ Quản lý Thâm niên",
                 "🏆 Thi đua - Khen thưởng", "🚨 Quản lý Vụ việc"]
 if is_admin:
     menu_options.append("⚙️ Quản lý Tài khoản")
+
 menu = st.sidebar.radio("Điều hướng", menu_options)
 st.sidebar.markdown("---")
 if st.sidebar.button("🚪 Đăng xuất", **W):
     logout()
+
 if st.session_state.get("flash"):
     st.success(st.session_state.pop("flash"))
+
+
 # ==========================================
 # CÁC MODULE CHỨC NĂNG
 # ==========================================
@@ -317,19 +396,20 @@ def vc_fields(info=None):
     edit = info is not None
     g = (lambda k: safe_str(info[k])) if edit else (lambda k: "")
     d = (lambda k: date_or_none(info[k])) if edit else (lambda k: None)
+
     st.markdown("**1. Thông tin cơ bản**")
     c1, c2, c3, c4 = st.columns(4)
     ma = c1.text_input("Mã viên chức (*)", value=g("ma_vien_chuc"), disabled=edit)
     ho_ten = c2.text_input("Họ và tên (*)", value=g("ho_ten"))
     gioi_tinh = c3.selectbox("Giới tính", GIOI_TINH, index=pick(GIOI_TINH, g("gioi_tinh")))
     ngay_sinh = c4.date_input("Ngày sinh", value=d("ngay_sinh"), min_value=MIN_DATE, max_value=MAX_DATE, format=DATE_FORMAT)
+
     c5, c6, c7, c8 = st.columns(4)
     dan_toc = c5.text_input("Dân tộc", value=g("dan_toc"))
     cv_ids = list(CV_NAMES)
     cur_cv = info["chuc_vu_id"] if edit else None
     cv_idx = cv_ids.index(int(cur_cv)) if edit and pd.notna(cur_cv) and int(cur_cv) in cv_ids else 0
-    chuc_vu_id = c6.selectbox("Chức vụ", options=cv_ids, index=cv_idx, format_func=CV_NAMES.get,
-                              disabled=edit and not is_admin)
+    chuc_vu_id = c6.selectbox("Chức vụ", options=cv_ids, index=cv_idx, format_func=CV_NAMES.get)
     ngay_td = c7.date_input("Ngày tuyển dụng", value=d("ngay_tuyen_dung"), min_value=MIN_DATE, max_value=MAX_DATE, format=DATE_FORMAT)
     ngay_dang = c8.date_input("Ngày vào Đảng", value=d("ngay_vao_dang"), min_value=MIN_DATE, max_value=MAX_DATE, format=DATE_FORMAT)
 
@@ -345,12 +425,14 @@ def vc_fields(info=None):
     hang = c13.selectbox("Hạng CDNN", HANG_CDNN, index=pick(HANG_CDNN, g("hang_chuc_danh")))
     thac_si = c14.text_input("Thạc sĩ chuyên ngành", value=g("thac_si_chuyen_nganh"))
     qlnn = c15.text_input("Quản lý nhà nước", value=g("quan_ly_nha_nuoc"))
+
     c16, c17, c18, c19 = st.columns(4)
     llct = c16.text_input("Lý luận chính trị", value=g("ly_luan_chinh_tri"))
     tin_hoc = c17.text_input("Tin học", value=g("tin_hoc"))
     ngoai_ngu = c18.text_input("Ngoại ngữ", value=g("ngoai_ngu"))
     cc_khac = c19.text_input("Chứng chỉ khác", value=g("chung_chi_khac"))
     ghi_chu = st.text_input("Ghi chú thêm", value=g("ghi_chu"))
+
     vals = {
         "ho_ten": ho_ten.strip(), "gioi_tinh": gioi_tinh, "ngay_sinh": sql_date(ngay_sinh), "dan_toc": dan_toc,
         "chuc_vu_id": int(chuc_vu_id), "ngay_tuyen_dung": sql_date(ngay_td), "ngay_vao_dang": sql_date(ngay_dang),
@@ -359,6 +441,8 @@ def vc_fields(info=None):
         "ly_luan_chinh_tri": llct, "tin_hoc": tin_hoc, "ngoai_ngu": ngoai_ngu, "chung_chi_khac": cc_khac, "ghi_chu": ghi_chu,
     }
     return ma.strip(), vals
+
+
 if menu == "📊 Tổng quan":
     st.title("📊 Bảng điều khiển Tổng quan")
     row = q("""SELECT COUNT(*) AS tong,
