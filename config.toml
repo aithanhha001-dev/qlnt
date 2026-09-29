@@ -1,0 +1,6 @@
+[client]
+# Chế độ "viewer": ẩn hoàn toàn nút Edit / Deploy / menu ⋮ của Streamlit
+toolbarMode = "viewer"
+
+[server]
+runOnSave = false
