@@ -12,7 +12,7 @@ import streamlit as st
 # ==========================================
 # 1. CẤU HÌNH TRANG & HÀM TIỆN ÍCH
 # ==========================================
-st.set_page_config(page_title="Quản lý Nhà trường", layout="wide", page_icon="🏫")
+st.set_page_config(page_title="Quản lý nhân sư ", layout="wide", page_icon="🏫")
 DB_NAME = "quanly_nhatruong.db"
 
 # Ẩn thanh công cụ của Streamlit (nút Edit/Deploy/menu ⋮) để người dùng không mở được mã nguồn từ giao diện
