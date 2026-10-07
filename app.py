@@ -739,6 +739,10 @@ elif menu == "⏳ Quản lý Thâm niên":
         SELECT vc.id, vc.ma_vien_chuc AS "Mã VC", vc.ho_ten AS "Họ và tên", cv.ten_chuc_vu AS "Chức vụ",
                vc.muc_tham_nien, vc.ngay_huong_tham_nien, vc.chu_ky_nang_tham_nien
         FROM vien_chuc vc LEFT JOIN chuc_vu cv ON vc.chuc_vu_id = cv.id
+        WHERE COALESCE(cv.ten_chuc_vu, '') NOT LIKE ? ORDER BY vc.ma_vien_chuc ASC""", ('Nhân viên%',)) = q("""
+        SELECT vc.id, vc.ma_vien_chuc AS "Mã VC", vc.ho_ten AS "Họ và tên", cv.ten_chuc_vu AS "Chức vụ",
+               vc.muc_tham_nien, vc.ngay_huong_tham_nien, vc.chu_ky_nang_tham_nien
+        FROM vien_chuc vc LEFT JOIN chuc_vu cv ON vc.chuc_vu_id = cv.id
         WHERE COALESCE(cv.ten_chuc_vu, '') NOT LIKE 'Nhân viên%' ORDER BY vc.ma_vien_chuc ASC""")
 
     def calc_tn(row):
