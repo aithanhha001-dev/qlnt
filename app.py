@@ -678,9 +678,9 @@ elif menu == "💰 Quản lý Lương":
 
     with tab_l1:
         df_luong = q("""
-            SELECT vc.ma_vien_chuc AS 'Mã VC', vc.ho_ten AS 'Họ và tên', cv.ten_chuc_vu AS 'Chức vụ',
-                   COALESCE(vc.he_so_luong, 0) AS 'Hệ số lương', COALESCE(vc.phu_cap, 0) AS 'Phụ cấp',
-                   vc.ngay_huong_luong AS 'Ngày hưởng HS', COALESCE(vc.chu_ky_nang_luong, 3) AS 'Chu kỳ (Năm)'
+            SELECT vc.ma_vien_chuc AS "Mã VC", vc.ho_ten AS "Họ và tên", cv.ten_chuc_vu AS "Chức vụ",
+                   COALESCE(vc.he_so_luong, 0) AS "Hệ số lương", COALESCE(vc.phu_cap, 0) AS "Phụ cấp",
+                   vc.ngay_huong_luong AS "Ngày hưởng HS", COALESCE(vc.chu_ky_nang_luong, 3) AS "Chu kỳ (Năm)"
             FROM vien_chuc vc LEFT JOIN chuc_vu cv ON vc.chuc_vu_id = cv.id ORDER BY vc.ma_vien_chuc ASC""")
         if not df_luong.empty:
             df_luong.insert(0, "STT", range(1, len(df_luong) + 1))
@@ -736,7 +736,7 @@ elif menu == "⏳ Quản lý Thâm niên":
     else: tab_t1, tab_t_edit = st.tabs(["📋 Bảng Thâm niên Đơn vị", "✏️ Cập nhật thông tin cá nhân"])
 
     df_tn_all = q("""
-        SELECT vc.id, vc.ma_vien_chuc AS 'Mã VC', vc.ho_ten AS 'Họ và tên', cv.ten_chuc_vu AS 'Chức vụ',
+        SELECT vc.id, vc.ma_vien_chuc AS "Mã VC", vc.ho_ten AS "Họ và tên", cv.ten_chuc_vu AS "Chức vụ",
                vc.muc_tham_nien, vc.ngay_huong_tham_nien, vc.chu_ky_nang_tham_nien
         FROM vien_chuc vc LEFT JOIN chuc_vu cv ON vc.chuc_vu_id = cv.id
         WHERE COALESCE(cv.ten_chuc_vu, '') NOT LIKE 'Nhân viên%' ORDER BY vc.ma_vien_chuc ASC""")
@@ -823,10 +823,10 @@ elif menu == "🏆 Thi đua - Khen thưởng":
     tab_k1, tab_k2, tab_k3 = st.tabs(["📋 Danh sách", "➕ Thêm mới", "✏️ Cập nhật & Xóa"])
     where, params = scope_where("vc")
     df_kt = q(f"""
-        SELECT kt.id, vc.ma_vien_chuc AS 'Mã VC', vc.ho_ten AS 'Họ và tên',
-               kt.ngay_thang AS 'Ngày tháng', kt.thanh_tich AS 'Thành tích',
-               kt.danh_hieu AS 'Danh hiệu', kt.hinh_thuc AS 'Hình thức',
-               kt.cap_khen AS 'Cấp khen', kt.nam_khen AS 'Năm', kt.so_quyet_dinh AS 'Số QĐ'
+        SELECT kt.id, vc.ma_vien_chuc AS "Mã VC", vc.ho_ten AS "Họ và tên",
+               kt.ngay_thang AS "Ngày tháng", kt.thanh_tich AS "Thành tích",
+               kt.danh_hieu AS "Danh hiệu", kt.hinh_thuc AS "Hình thức",
+               kt.cap_khen AS "Cấp khen", kt.nam_khen AS "Năm", kt.so_quyet_dinh AS "Số QĐ"
         FROM khen_thuong kt JOIN vien_chuc vc ON kt.vien_chuc_id = vc.id {where} ORDER BY kt.ngay_thang DESC""", params)
 
     with tab_k1:
@@ -899,7 +899,7 @@ elif menu == "🚨 Quản lý Vụ việc":
     if is_admin: tab_v1, tab_v2, tab_v3 = st.tabs(["📋 Danh sách Vụ việc", "➕ Thêm Vụ việc", "✏️ Cập nhật & Xóa"])
     else: (tab_v1,) = st.tabs(["📋 Danh sách Vụ việc"])
 
-    df_vv = q("SELECT id, ngay_thang AS 'Ngày tháng', noi_dung AS 'Nội dung vụ việc', phuong_an AS 'Phương án xử lý' FROM vu_viec ORDER BY ngay_thang DESC")
+    df_vv = q("""SELECT id, ngay_thang AS "Ngày tháng", noi_dung AS "Nội dung vụ việc", phuong_an AS "Phương án xử lý" FROM vu_viec ORDER BY ngay_thang DESC""")
     with tab_v1:
         if not df_vv.empty:
             df_show = df_vv.drop(columns=["id"])
