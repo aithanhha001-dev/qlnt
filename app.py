@@ -227,112 +227,119 @@ def style_days(df, day_cols):
 # ==========================================
 # 3. KHỞI TẠO BẢNG TỰ ĐỘNG
 # ==========================================
+# 3. KHỞI TẠO BẢNG TỰ ĐỘNG (ĐÃ TỐI ƯU ĐÁM MÂY)
+# ==========================================
 VC_EXTRA_COLS = {
     "he_so_luong": "REAL", "phu_cap": "REAL", "ngay_huong_luong": "DATE", "chu_ky_nang_luong": "INTEGER",
     "muc_tham_nien": "REAL", "ngay_huong_tham_nien": "DATE", "chu_ky_nang_tham_nien": "INTEGER",
 }
 
+@st.cache_resource(show_spinner=False)
 def init_db():
-    with db() as conn:
-        if USE_POSTGRES:
-            with conn.cursor() as c:
-                c.execute("""CREATE TABLE IF NOT EXISTS users (
-                             id SERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, 
-                             role TEXT NOT NULL, ma_vien_chuc TEXT)""")
-                c.execute("""CREATE TABLE IF NOT EXISTS chuc_vu (id SERIAL PRIMARY KEY, ten_chuc_vu TEXT NOT NULL)""")
-                c.execute("""CREATE TABLE IF NOT EXISTS vien_chuc (
-                                id SERIAL PRIMARY KEY, ma_vien_chuc TEXT UNIQUE NOT NULL, ho_ten TEXT NOT NULL,
+    try:
+        with db() as conn:
+            if USE_POSTGRES:
+                with conn.cursor() as c:
+                    c.execute("""CREATE TABLE IF NOT EXISTS users (
+                                 id SERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, 
+                                 role TEXT NOT NULL, ma_vien_chuc TEXT)""")
+                    c.execute("""CREATE TABLE IF NOT EXISTS chuc_vu (id SERIAL PRIMARY KEY, ten_chuc_vu TEXT NOT NULL)""")
+                    c.execute("""CREATE TABLE IF NOT EXISTS vien_chuc (
+                                    id SERIAL PRIMARY KEY, ma_vien_chuc TEXT UNIQUE NOT NULL, ho_ten TEXT NOT NULL,
+                                    gioi_tinh TEXT, ngay_sinh DATE, dan_toc TEXT, chuc_vu_id INTEGER, ngay_tuyen_dung DATE,
+                                    ngay_vao_dang DATE, hang_chuc_danh TEXT, trinh_do TEXT, ten_truong_dao_tao TEXT,
+                                    chuyen_nganh TEXT, hinh_thuc_dao_tao TEXT, thac_si_chuyen_nganh TEXT, quan_ly_nha_nuoc TEXT,
+                                    ly_luan_chinh_tri TEXT, tin_hoc TEXT, ngoai_ngu TEXT, chung_chi_khac TEXT, ghi_chu TEXT,
+                                    he_so_luong REAL, phu_cap REAL, ngay_huong_luong DATE, chu_ky_nang_luong INTEGER,
+                                    muc_tham_nien REAL, ngay_huong_tham_nien DATE, chu_ky_nang_tham_nien INTEGER,
+                                    FOREIGN KEY(chuc_vu_id) REFERENCES chuc_vu(id))""")
+                    c.execute("""CREATE TABLE IF NOT EXISTS cham_cong (
+                                    id SERIAL PRIMARY KEY, vien_chuc_id INTEGER NOT NULL,
+                                    ngay_cham_cong DATE NOT NULL, trang_thai TEXT DEFAULT 'X', ghi_chu TEXT,
+                                    UNIQUE(vien_chuc_id, ngay_cham_cong))""")
+                    c.execute("""CREATE TABLE IF NOT EXISTS khen_thuong (
+                                    id SERIAL PRIMARY KEY, vien_chuc_id INTEGER NOT NULL,
+                                    ngay_thang DATE, thanh_tich TEXT, danh_hieu TEXT, hinh_thuc TEXT,
+                                    cap_khen TEXT, nam_khen INTEGER, so_quyet_dinh TEXT,
+                                    FOREIGN KEY(vien_chuc_id) REFERENCES vien_chuc(id))""")
+                    c.execute("""CREATE TABLE IF NOT EXISTS vu_viec (
+                                    id SERIAL PRIMARY KEY, ngay_thang DATE, noi_dung TEXT, phuong_an TEXT)""")
+
+                    def add_missing(table, cols):
+                        c.execute("SELECT column_name FROM information_schema.columns WHERE table_name = %s", (table,))
+                        existing = [r[0] for r in c.fetchall()]
+                        for name, typ in cols.items():
+                            if name not in existing:
+                                c.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
+                    
+                    add_missing("users", {"ma_vien_chuc": "TEXT"})
+                    add_missing("vien_chuc", VC_EXTRA_COLS)
+
+                    # Tối ưu chèn Admin: Dùng ON CONFLICT để bỏ qua nếu đã tồn tại, tránh lỗi UniqueViolation
+                    c.execute("""INSERT INTO users (username, password, role, ma_vien_chuc) 
+                                 VALUES (%s, %s, %s, '') 
+                                 ON CONFLICT (username) DO NOTHING""",
+                              ("admin", make_hashes("admin123"), "admin"))
+                    
+                    for old, new in CHUC_VU_CU.items():
+                        c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=%s", (new,))
+                        if not c.fetchone():
+                            c.execute("UPDATE chuc_vu SET ten_chuc_vu=%s WHERE ten_chuc_vu=%s", (new, old))
+                    for ten in CHUC_VU_LIST:
+                        c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=%s", (ten,))
+                        if not c.fetchone():
+                            c.execute("INSERT INTO chuc_vu (ten_chuc_vu) VALUES (%s)", (ten,))
+                    
+                    placeholders = ','.join(['%s'] * len(CHUC_VU_LIST))
+                    c.execute(f"""DELETE FROM chuc_vu WHERE ten_chuc_vu NOT IN ({placeholders})
+                                  AND id NOT IN (SELECT chuc_vu_id FROM vien_chuc WHERE chuc_vu_id IS NOT NULL)""", CHUC_VU_LIST)
+            else:
+                c = conn.cursor()
+                c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, ma_vien_chuc TEXT)''')
+                c.execute('''CREATE TABLE IF NOT EXISTS chuc_vu (id INTEGER PRIMARY KEY AUTOINCREMENT, ten_chuc_vu TEXT NOT NULL)''')
+                c.execute('''CREATE TABLE IF NOT EXISTS vien_chuc (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT, ma_vien_chuc TEXT UNIQUE NOT NULL, ho_ten TEXT NOT NULL,
                                 gioi_tinh TEXT, ngay_sinh DATE, dan_toc TEXT, chuc_vu_id INTEGER, ngay_tuyen_dung DATE,
                                 ngay_vao_dang DATE, hang_chuc_danh TEXT, trinh_do TEXT, ten_truong_dao_tao TEXT,
                                 chuyen_nganh TEXT, hinh_thuc_dao_tao TEXT, thac_si_chuyen_nganh TEXT, quan_ly_nha_nuoc TEXT,
                                 ly_luan_chinh_tri TEXT, tin_hoc TEXT, ngoai_ngu TEXT, chung_chi_khac TEXT, ghi_chu TEXT,
                                 he_so_luong REAL, phu_cap REAL, ngay_huong_luong DATE, chu_ky_nang_luong INTEGER,
                                 muc_tham_nien REAL, ngay_huong_tham_nien DATE, chu_ky_nang_tham_nien INTEGER,
-                                FOREIGN KEY(chuc_vu_id) REFERENCES chuc_vu(id))""")
-                c.execute("""CREATE TABLE IF NOT EXISTS cham_cong (
-                                id SERIAL PRIMARY KEY, vien_chuc_id INTEGER NOT NULL,
+                                FOREIGN KEY(chuc_vu_id) REFERENCES chuc_vu(id))''')
+                c.execute('''CREATE TABLE IF NOT EXISTS cham_cong (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT, vien_chuc_id INTEGER NOT NULL,
                                 ngay_cham_cong DATE NOT NULL, trang_thai TEXT DEFAULT 'X', ghi_chu TEXT,
-                                UNIQUE(vien_chuc_id, ngay_cham_cong))""")
-                c.execute("""CREATE TABLE IF NOT EXISTS khen_thuong (
-                                id SERIAL PRIMARY KEY, vien_chuc_id INTEGER NOT NULL,
+                                UNIQUE(vien_chuc_id, ngay_cham_cong))''')
+                c.execute('''CREATE TABLE IF NOT EXISTS khen_thuong (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT, vien_chuc_id INTEGER NOT NULL,
                                 ngay_thang DATE, thanh_tich TEXT, danh_hieu TEXT, hinh_thuc TEXT,
                                 cap_khen TEXT, nam_khen INTEGER, so_quyet_dinh TEXT,
-                                FOREIGN KEY(vien_chuc_id) REFERENCES vien_chuc(id))""")
-                c.execute("""CREATE TABLE IF NOT EXISTS vu_viec (
-                                id SERIAL PRIMARY KEY, ngay_thang DATE, noi_dung TEXT, phuong_an TEXT)""")
+                                FOREIGN KEY(vien_chuc_id) REFERENCES vien_chuc(id))''')
+                c.execute('''CREATE TABLE IF NOT EXISTS vu_viec (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT, ngay_thang DATE, noi_dung TEXT, phuong_an TEXT)''')
 
                 def add_missing(table, cols):
-                    c.execute("SELECT column_name FROM information_schema.columns WHERE table_name = %s", (table,))
-                    existing = [r[0] for r in c.fetchall()]
+                    existing = [r[1] for r in c.execute(f"PRAGMA table_info({table})").fetchall()]
                     for name, typ in cols.items():
-                        if name not in existing:
-                            c.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
-                
+                        if name not in existing: c.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
+
                 add_missing("users", {"ma_vien_chuc": "TEXT"})
                 add_missing("vien_chuc", VC_EXTRA_COLS)
 
-                c.execute("SELECT COUNT(*) FROM users WHERE username='admin'")
-                if c.fetchone()[0] == 0:
-                    c.execute("INSERT INTO users (username, password, role, ma_vien_chuc) VALUES (%s, %s, %s, '')",
-                              ("admin", make_hashes("admin123"), "admin"))
-                
-                for old, new in CHUC_VU_CU.items():
-                    c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=%s", (new,))
-                    if not c.fetchone():
-                        c.execute("UPDATE chuc_vu SET ten_chuc_vu=%s WHERE ten_chuc_vu=%s", (new, old))
-                for ten in CHUC_VU_LIST:
-                    c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=%s", (ten,))
-                    if not c.fetchone():
-                        c.execute("INSERT INTO chuc_vu (ten_chuc_vu) VALUES (%s)", (ten,))
-                
-                placeholders = ','.join(['%s'] * len(CHUC_VU_LIST))
-                c.execute(f"""DELETE FROM chuc_vu WHERE ten_chuc_vu NOT IN ({placeholders})
-                              AND id NOT IN (SELECT chuc_vu_id FROM vien_chuc WHERE chuc_vu_id IS NOT NULL)""", CHUC_VU_LIST)
-        else:
-            c = conn.cursor()
-            c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                         username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL, ma_vien_chuc TEXT)''')
-            c.execute('''CREATE TABLE IF NOT EXISTS chuc_vu (id INTEGER PRIMARY KEY AUTOINCREMENT, ten_chuc_vu TEXT NOT NULL)''')
-            c.execute('''CREATE TABLE IF NOT EXISTS vien_chuc (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT, ma_vien_chuc TEXT UNIQUE NOT NULL, ho_ten TEXT NOT NULL,
-                            gioi_tinh TEXT, ngay_sinh DATE, dan_toc TEXT, chuc_vu_id INTEGER, ngay_tuyen_dung DATE,
-                            ngay_vao_dang DATE, hang_chuc_danh TEXT, trinh_do TEXT, ten_truong_dao_tao TEXT,
-                            chuyen_nganh TEXT, hinh_thuc_dao_tao TEXT, thac_si_chuyen_nganh TEXT, quan_ly_nha_nuoc TEXT,
-                            ly_luan_chinh_tri TEXT, tin_hoc TEXT, ngoai_ngu TEXT, chung_chi_khac TEXT, ghi_chu TEXT,
-                            he_so_luong REAL, phu_cap REAL, ngay_huong_luong DATE, chu_ky_nang_luong INTEGER,
-                            muc_tham_nien REAL, ngay_huong_tham_nien DATE, chu_ky_nang_tham_nien INTEGER,
-                            FOREIGN KEY(chuc_vu_id) REFERENCES chuc_vu(id))''')
-            c.execute('''CREATE TABLE IF NOT EXISTS cham_cong (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT, vien_chuc_id INTEGER NOT NULL,
-                            ngay_cham_cong DATE NOT NULL, trang_thai TEXT DEFAULT 'X', ghi_chu TEXT,
-                            UNIQUE(vien_chuc_id, ngay_cham_cong))''')
-            c.execute('''CREATE TABLE IF NOT EXISTS khen_thuong (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT, vien_chuc_id INTEGER NOT NULL,
-                            ngay_thang DATE, thanh_tich TEXT, danh_hieu TEXT, hinh_thuc TEXT,
-                            cap_khen TEXT, nam_khen INTEGER, so_quyet_dinh TEXT,
-                            FOREIGN KEY(vien_chuc_id) REFERENCES vien_chuc(id))''')
-            c.execute('''CREATE TABLE IF NOT EXISTS vu_viec (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT, ngay_thang DATE, noi_dung TEXT, phuong_an TEXT)''')
-
-            def add_missing(table, cols):
-                existing = [r[1] for r in c.execute(f"PRAGMA table_info({table})").fetchall()]
-                for name, typ in cols.items():
-                    if name not in existing: c.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
-
-            add_missing("users", {"ma_vien_chuc": "TEXT"})
-            add_missing("vien_chuc", VC_EXTRA_COLS)
-
-            if c.execute("SELECT COUNT(*) FROM users WHERE username='admin'").fetchone()[0] == 0:
-                c.execute("INSERT INTO users (username, password, role, ma_vien_chuc) VALUES (?, ?, ?, '')",
+                c.execute("INSERT OR IGNORE INTO users (username, password, role, ma_vien_chuc) VALUES (?, ?, ?, '')",
                           ("admin", make_hashes("admin123"), "admin"))
-            for old, new in CHUC_VU_CU.items():
-                if not c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=?", (new,)).fetchone():
-                    c.execute("UPDATE chuc_vu SET ten_chuc_vu=? WHERE ten_chuc_vu=?", (new, old))
-            for ten in CHUC_VU_LIST:
-                if not c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=?", (ten,)).fetchone():
-                    c.execute("INSERT INTO chuc_vu (ten_chuc_vu) VALUES (?)", (ten,))
-            c.execute(f"""DELETE FROM chuc_vu WHERE ten_chuc_vu NOT IN ({','.join('?' * len(CHUC_VU_LIST))})
-                          AND id NOT IN (SELECT chuc_vu_id FROM vien_chuc WHERE chuc_vu_id IS NOT NULL)""", CHUC_VU_LIST)
+                for old, new in CHUC_VU_CU.items():
+                    if not c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=?", (new,)).fetchone():
+                        c.execute("UPDATE chuc_vu SET ten_chuc_vu=? WHERE ten_chuc_vu=?", (new, old))
+                for ten in CHUC_VU_LIST:
+                    if not c.execute("SELECT 1 FROM chuc_vu WHERE ten_chuc_vu=?", (ten,)).fetchone():
+                        c.execute("INSERT INTO chuc_vu (ten_chuc_vu) VALUES (?)", (ten,))
+                c.execute(f"""DELETE FROM chuc_vu WHERE ten_chuc_vu NOT IN ({','.join('?' * len(CHUC_VU_LIST))})
+                              AND id NOT IN (SELECT chuc_vu_id FROM vien_chuc WHERE chuc_vu_id IS NOT NULL)""", CHUC_VU_LIST)
+    except Exception as e:
+        print(f"Lỗi khởi tạo DB: {e}")
+
 init_db()
 
 # ==========================================
