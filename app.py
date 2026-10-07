@@ -347,7 +347,7 @@ def logout():
     st.rerun()
 
 if not st.session_state["logged_in"]:
-    st.markdown("<h1 style='text-align: center; color: #1E88E5; margin-top: 50px;'>🏫 HỆ THỐNG QUẢN LÝ NHÂN SỰ</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #1E88E5; margin-top: 60px;'>🏫 HỆ THỐNG QUẢN LÝ NHÂN SỰ PHÂN HIỆU 1 - PHƯƠNG THIỆN</h1>", unsafe_allow_html=True)
     st.markdown("---")
     _, col2, _ = st.columns([1, 1, 1])
     with col2:
